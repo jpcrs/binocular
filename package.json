@@ -1,0 +1,164 @@
+{
+  "name": "binocular",
+	"displayName": "binocular",
+	"description": "Not exactly a telescope, but it's useful sometimes. Extension to search/navigate through files and workspaces.",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.68.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+        "onCommand:binocular.findFilesByNameInCurrentWorkspace",
+		"onCommand:binocular.findFilesByNameInAllOpenWorkspaces",
+		"onCommand:binocular.findFilesByNameInConfiguredFolders",
+
+        "onCommand:binocular.findFilesByContentInCurrentWorkspace",
+		"onCommand:binocular.findFilesByContentInAllWorkspaces",
+		"onCommand:binocular.findFilesByContentInConfiguredFolders",
+
+		"onCommand:binocular.addFolderToWorkspaceFromConfiguredFolders",
+		"onCommand:binocular.changeToWorkspaceFromConfiguredFolders",
+        "onCommand:binocular.removeFoldersFromWorkspace"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "binocular.findFilesByNameInCurrentWorkspace",
+				"title": "Binocular: Search for file name (Current working project)"
+			},
+			{
+				"command": "binocular.findFilesByNameInAllOpenWorkspaces",
+				"title": "Binocular: Search for file name (All open projects)"
+			},
+			{
+				"command": "binocular.findFilesByNameInConfiguredFolders",
+				"title": "Binocular: Search for file name (Configured folders)"
+			},
+			{
+				"command": "binocular.findFilesByContentInCurrentWorkspace",
+				"title": "Binocular: Search for file content (Current working project)"
+			},
+			{
+				"command": "binocular.findFilesByContentInAllWorkspaces",
+				"title": "Binocular: Search for file content (All open projects)"
+			},
+			{
+				"command": "binocular.findFilesByContentInConfiguredFolders",
+				"title": "Binocular: Search for file content (Configured folders)"
+			},
+			{
+				"command": "binocular.addFolderToWorkspaceFromConfiguredFolders",
+				"title": "Binocular: Add folder to workspace (Configured folders)"
+			},
+			{
+				"command": "binocular.changeToWorkspaceFromConfiguredFolders",
+				"title": "Binocular: Change to workspace (Configured folders)"
+			},
+			{
+				"command": "binocular.removeFoldersFromWorkspace",
+				"title": "Binocular: Remove folders from workspace"
+			}
+		],
+		"configuration": {
+			"title": "Binocular",
+			"properties": {
+				"binocular.general.additionalSearchLocations": {
+					"description": "Additional search locations",
+					"markdownDescription": "Search for files in these locations",
+					"type": "array",
+					"default": []
+				},
+				"binocular.general.useExternalTerminal": {
+					"description": "Use external terminal",
+					"markdownDescription": "Open in external terminal",
+					"type": "boolean",
+					"default": false
+				},
+				"binocular.command.externalTerminalCustomCommand": {
+					"description": "External terminal custom command",
+					"markdownDescription": "Command that will be used to open the terminal. Only applies when `#binocular.general.useExternalTerminal#` is `checked`. Default values are: `???` for Mac, `???` for Windows and `gnome-terminal -- sh -c` for Linux.",
+					"type": "string"
+				},
+				"binocular.command.findFilesByNameInCurrentWorkspaceCommand": {
+					"description": "Find files by name (Current workspace)",
+					"markdownDescription": "Command to find files by name in the current working project",
+					"type": "string",
+					"default": "rg --files --hidden $(pwd) | fzf --ansi -m --preview 'bat --color=always {}'"
+				},
+				"binocular.command.findFilesByNameInAllWorkspacesCommand": {
+					"description": "Find files by name (All workspaces)",
+					"markdownDescription": "Command to find files by name in all open projects",
+					"type": "string",
+					"default": "rg --files --hidden $(pwd) # | fzf --ansi -m --preview 'bat --color=always {}'"
+				},
+				"binocular.command.findFilesByNameInConfiguredFoldersCommand": {
+					"description": "Find files by name (Configured folders)",
+					"markdownDescription": "Command to find files by name in all configured folders",
+					"type": "string",
+					"default": "rg --files --hidden $(pwd) # | fzf --ansi -m --preview 'bat --color=always {}'"
+				},
+				"binocular.command.findFilesByContentInCurrentWorkspaceCommand": {
+					"description": "Find files by content (Current workspace)",
+					"markdownDescription": "Command to find files by content in the current working project",
+					"type": "string",
+					"default": "rg --column --line-number --no-heading --color=always --smart-case . $(pwd) | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
+				},
+				"binocular.command.findFilesByContentInAllWorkspacesCommand": {
+					"description": "Find files by content (All workspaces)",
+					"markdownDescription": "Command to find files by content in all open projects",
+					"type": "string",
+					"default": "rg --column --line-number --no-heading --color=always --smart-case . $(pwd) # | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) # || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
+				},
+				"binocular.command.findFilesByContentInConfiguredFoldersCommand": {
+					"description": "Find files by content (Configured folders)",
+					"markdownDescription": "Command to find files by content in all configured folders",
+					"type": "string",
+					"default": "rg --column --line-number --no-heading --color=always --smart-case . $(pwd) # | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) # || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
+				},
+				"binocular.command.addFolderToWorkspaceFromConfiguredFoldersCommand": {
+					"description": "Add folder to workspace (Configured folders)",
+					"markdownDescription": "Command to add folder to workspace from configured folders",
+					"type": "string",
+					"default": "fd .git$ -td -H --absolute-path # | sed 's/\\/.git//g' | fzf -m"
+				},
+				"binocular.command.changeToWorkspaceFromConfiguredFoldersCommand": {
+					"description": "Change to workspace (Configured folders)",
+					"markdownDescription": "Command to change to workspace from configured folders",
+					"type": "string",
+					"default": "fd .git$ -td -H --absolute-path # | sed 's/\\/.git//g' | fzf"
+				},
+				"binocular.command.removeFoldersFromWorkspaceCommand": {
+					"description": "Remove folders from workspace",
+					"markdownDescription": "Command to remove folders from workspace",
+					"type": "string",
+					"default": "echo # | fzf -m"
+				}
+			}	
+		}
+
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"lint": "eslint src --ext ts",
+		"test": "node ./out/test/runTest.js"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.68.0",
+		"@types/glob": "^7.2.0",
+		"@types/mocha": "^9.1.1",
+		"@types/node": "16.x",
+		"@typescript-eslint/eslint-plugin": "^5.27.0",
+		"@typescript-eslint/parser": "^5.27.0",
+		"eslint": "^8.16.0",
+		"glob": "^8.0.3",
+		"mocha": "^10.0.0",
+		"typescript": "^4.7.2",
+		"@vscode/test-electron": "^2.1.3"
+	}
+}
