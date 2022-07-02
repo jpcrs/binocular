@@ -79,60 +79,60 @@
 				},
 				"binocular.command.externalTerminalCustomCommand": {
 					"description": "External terminal custom command",
-					"markdownDescription": "Command that will be used to open the terminal. Only applies when `#binocular.general.useExternalTerminal#` is `checked`. Default values are: `???` for Mac, `???` for Windows and `gnome-terminal -- sh -c` for Linux.",
+					"markdownDescription": "Command that will be used to open the terminal. Only applies when `#binocular.general.useExternalTerminal#` is `checked`. Default values are: **Mac:** `osascript -e 'tell app \"Terminal\" to do script \"ls\" & activate & do script \"#;exit\"`. **Window:** `start cmd /k \"# & exit /s\"`. **Linux:** `gnome-terminal -- sh -c \"#\"`. The __#__ is used for placeholder to the command that will be executed.",
 					"type": "string"
 				},
 				"binocular.command.findFilesByNameInCurrentWorkspaceCommand": {
 					"description": "Find files by name (Current workspace)",
-					"markdownDescription": "Command to find files by name in the current working project",
+					"markdownDescription": "Command to find files by name in the current working project. The __@__ is used as placeholder for the pwd command. Default values are: **Windows:** `%cd%`. **Other OS:** `$(pwd)`",
 					"type": "string",
-					"default": "rg --files --hidden $(pwd) | fzf --ansi -m --preview 'bat --color=always {}'"
+					"default": "rg --files --hidden @ | fzf --ansi -m --preview 'bat --color=always {}'"
 				},
 				"binocular.command.findFilesByNameInAllWorkspacesCommand": {
 					"description": "Find files by name (All workspaces)",
-					"markdownDescription": "Command to find files by name in all open projects",
+					"markdownDescription": "Command to find files by name in all open projects. The __@__ is used as placeholder for the pwd command. Default values are: **Windows:** `%cd%`. **Other OS:** `$(pwd)`. The __#__ is used as placeholder for the folders parameters used in ripgrep/fd.",
 					"type": "string",
-					"default": "rg --files --hidden $(pwd) # | fzf --ansi -m --preview 'bat --color=always {}'"
+					"default": "rg --files --hidden @ # | fzf --ansi -m --preview 'bat --color=always {}'"
 				},
 				"binocular.command.findFilesByNameInConfiguredFoldersCommand": {
 					"description": "Find files by name (Configured folders)",
-					"markdownDescription": "Command to find files by name in all configured folders",
+					"markdownDescription": "Command to find files by name in all configured folders. The __@__ is used as placeholder for the pwd command. Default values are: **Windows:** `%cd%`. **Other OS:** `$(pwd)`. The __#__ is used as placeholder for the folders parameters used in ripgrep/fd.",
 					"type": "string",
-					"default": "rg --files --hidden $(pwd) # | fzf --ansi -m --preview 'bat --color=always {}'"
+					"default": "rg --files --hidden @ # | fzf --ansi -m --preview 'bat --color=always {}'"
 				},
 				"binocular.command.findFilesByContentInCurrentWorkspaceCommand": {
 					"description": "Find files by content (Current workspace)",
-					"markdownDescription": "Command to find files by content in the current working project",
+					"markdownDescription": "Command to find files by content in the current working project. The __@__ is used as placeholder for the pwd command. Default values are: **Windows:** `%cd%`. **Other OS:** `$(pwd)`.",
 					"type": "string",
-					"default": "rg --column --line-number --no-heading --color=always --smart-case . $(pwd) | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
+					"default": "rg --column --line-number --no-heading --color=always --smart-case . @ | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
 				},
 				"binocular.command.findFilesByContentInAllWorkspacesCommand": {
 					"description": "Find files by content (All workspaces)",
-					"markdownDescription": "Command to find files by content in all open projects",
+					"markdownDescription": "Command to find files by content in all open projects. The __@__ is used as placeholder for the pwd command. Default values are: **Windows:** `%cd%`. **Other OS:** `$(pwd)`. The __#__ is used as placeholder for the folders parameters used in ripgrep/fd.",
 					"type": "string",
-					"default": "rg --column --line-number --no-heading --color=always --smart-case . $(pwd) # | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) # || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
+					"default": "rg --column --line-number --no-heading --color=always --smart-case . @ # | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) # || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
 				},
 				"binocular.command.findFilesByContentInConfiguredFoldersCommand": {
 					"description": "Find files by content (Configured folders)",
-					"markdownDescription": "Command to find files by content in all configured folders",
+					"markdownDescription": "Command to find files by content in all configured folders. The __@__ is used as placeholder for the pwd command. Default values are: **Windows:** `%cd%`. **Other OS:** `$(pwd)`. The __#__ is used as placeholder for the folders parameters used in ripgrep/fd.",
 					"type": "string",
-					"default": "rg --column --line-number --no-heading --color=always --smart-case . $(pwd) # | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) # || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
+					"default": "rg --column --line-number --no-heading --color=always --smart-case . @ # | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) # || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
 				},
 				"binocular.command.addFolderToWorkspaceFromConfiguredFoldersCommand": {
 					"description": "Add folder to workspace (Configured folders)",
-					"markdownDescription": "Command to add folder to workspace from configured folders",
+					"markdownDescription": "Command to add folder to workspace from configured folders. The __#__ is used as placeholder for the folders parameters used in ripgrep/fd.",
 					"type": "string",
 					"default": "fd .git$ -td -H --absolute-path # | sed 's/\\/.git//g' | fzf -m"
 				},
 				"binocular.command.changeToWorkspaceFromConfiguredFoldersCommand": {
 					"description": "Change to workspace (Configured folders)",
-					"markdownDescription": "Command to change to workspace from configured folders",
+					"markdownDescription": "Command to change to workspace from configured folders. The __#__ is used as placeholder for the folders parameters used in ripgrep/fd.",
 					"type": "string",
 					"default": "fd .git$ -td -H --absolute-path # | sed 's/\\/.git//g' | fzf"
 				},
 				"binocular.command.removeFoldersFromWorkspaceCommand": {
 					"description": "Remove folders from workspace",
-					"markdownDescription": "Command to remove folders from workspace",
+					"markdownDescription": "Command to remove folders from workspace. The __#__ is used as placeholder for the workspaces open in vscode.",
 					"type": "string",
 					"default": "echo # | fzf -m"
 				}

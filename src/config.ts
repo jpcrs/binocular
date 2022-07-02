@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as os from 'os';
-import { EXTENSION_NAME } from './const';
+import { EXTENSION_NAME, ExternalTerminalCommands } from './const';
 
 /**
  * Extension configuration.
@@ -166,10 +166,10 @@ export class UserConfig implements Config {
 function getDefaultTerminalCommand(): string {
     switch (os.platform()) {
         case 'win32':
-            return 'start cmd /k "# & exit /s"';
+            return ExternalTerminalCommands.Windows;
         case 'darwin':
-            return `osascript -e 'tell app "Terminal" to do script "ls" & activate & do script "#;exit"`;
+            return ExternalTerminalCommands.MacOs;
         default:
-            return `gnome-terminal -- sh -c "#"`;
+            return ExternalTerminalCommands.Linux;
     }
 }

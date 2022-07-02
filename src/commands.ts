@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as os from 'os';
 import { addFolderToWorkspace, changeToWorkspace, openFile, openFileAndJumpToLine, removeFromWorkspace } from './fileWatchers';
 import { getConfiguredFolders, getTempFile, getWorkspaceFolders, getWorkspaceFoldersWithLineBreak } from './folderUtils';
 import { Config } from './config';
@@ -101,7 +102,7 @@ export function registerCommands(commands: { [key: string]: Command }, cfg: Conf
  * @returns Final command that will be executed by the terminal.
  */
 function parseCommand(cmd: Command, cfg: Config): string {
-    const configuredCommand = cmd.configCommand(cfg);
+    const configuredCommand = cmd.configCommand(cfg).replaceAll("@", getOsPwd());
 
     if (cfg.externalTerminal) {
         const commandToExecute = `${cmd.parseCommandWithParameters(cfg.externalTerminalCustomCommand.replaceAll("#", configuredCommand), cfg)} > ${getTempFile(cmd.fileName, cfg)}`;
@@ -110,4 +111,13 @@ function parseCommand(cmd: Command, cfg: Config): string {
 
     const commandToExecute = `${cmd.parseCommandWithParameters(configuredCommand, cfg)} > ${getTempFile(cmd.fileName, cfg)}`;
     return commandToExecute;
+}
+
+function getOsPwd(): string {
+    switch (os.platform()) {
+        case 'win32':
+            return '%cd%';
+        default:
+            return '$(pwd)'
+    }
 }
