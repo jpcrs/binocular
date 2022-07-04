@@ -17,7 +17,7 @@ export function parseCommand(cmd: Command, cfg: Config): string {
     shellCommand = shellCommand.replaceAll("{workspaceFoldersLineBreak}", getWorkspaceFoldersWithLineBreak());
 
     if (cfg.externalTerminal) {
-        return `${cfg.externalTerminalCustomCommand.replaceAll("#", shellCommand)} > ${getTempFile(cmd.outputFile, cfg)}`;
+        return `${cfg.externalTerminalCustomCommand.replaceAll("#", `${shellCommand} > ${getTempFile(cmd.outputFile, cfg)}`)}`;
     }
 
     return `${shellCommand} > ${getTempFile(cmd.outputFile, cfg)}`;

@@ -23,7 +23,7 @@ export class UserConfig implements Config {
     constructor() {
         this.additionalFolders = this.getCFG<string[]>('general.additionalSearchLocations');
         this.externalTerminal = this.getCFG<boolean>('general.useExternalTerminal');
-        this.externalTerminalCustomCommand = this.getCFG<string>('command.externalTerminalCustomCommand') !== '' ? this.getCFG<string>('command.externalTerminalCustomCommand') :  getDefaultTerminalCommand();
+        this.externalTerminalCustomCommand = this.getCFG<string>('command.externalTerminalCustomCommand') !== '' ? this.getCFG<string>('command.externalTerminalCustomCommand') : getDefaultTerminalCommand();
         this.findFilesByNameInCurrentWorkspaceCommand = this.getCFG<string>('command.findFilesByNameInCurrentWorkspaceCommand');
         this.findFilesByNameInAllWorkspacesCommand = this.getCFG<string>('command.findFilesByNameInAllWorkspacesCommand');
         this.findFilesByNameInConfiguredFoldersCommand = this.getCFG<string>('command.findFilesByNameInConfiguredFoldersCommand');

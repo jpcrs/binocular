@@ -115,25 +115,25 @@
 					"description": "Find files by content (All workspaces)",
 					"markdownDescription": "Command to find files by content in all open projects. The __@__ is used as placeholder for the pwd command. Default values are: **Windows:** `%cd%`. **Other OS:** `$(pwd)`. The __#__ is used as placeholder for the folders parameters used in ripgrep/fd.",
 					"type": "string",
-					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} {workspaceFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) # || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
+					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} {workspaceFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) {workspaceFolders} || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
 				},
 				"binocular.command.findFilesByContentInConfiguredFoldersCommand": {
 					"description": "Find files by content (Configured folders)",
 					"markdownDescription": "Command to find files by content in all configured folders. The __@__ is used as placeholder for the pwd command. Default values are: **Windows:** `%cd%`. **Other OS:** `$(pwd)`. The __#__ is used as placeholder for the folders parameters used in ripgrep/fd.",
 					"type": "string",
-					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} {configuredFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) # || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
+					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} {configuredFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) {configuredFolders} || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
 				},
 				"binocular.command.addFolderToWorkspaceFromConfiguredFoldersCommand": {
 					"description": "Add folder to workspace (Configured folders)",
 					"markdownDescription": "Command to add folder to workspace from configured folders. The __#__ is used as placeholder for the folders parameters used in ripgrep/fd.",
 					"type": "string",
-					"default": "fd .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf -m"
+					"default": "fdfind .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf -m"
 				},
 				"binocular.command.changeToWorkspaceFromConfiguredFoldersCommand": {
 					"description": "Change to workspace (Configured folders)",
 					"markdownDescription": "Command to change to workspace from configured folders. The __#__ is used as placeholder for the folders parameters used in ripgrep/fd.",
 					"type": "string",
-					"default": "fd .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf"
+					"default": "fdfind .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf"
 				},
 				"binocular.command.removeFoldersFromWorkspaceCommand": {
 					"description": "Remove folders from workspace",
@@ -172,6 +172,9 @@
 		}
 
 	},
+	"extensionDependencies": [
+		"vscode.git"
+	],
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
