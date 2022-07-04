@@ -105,6 +105,8 @@ export interface Config {
      * Guid of the extension. It's used to identify the temporary files that will be used as output for the terminal commands.
      */
     readonly guid: string,
+
+    refreshUserSettings(): void,
 }
 
 export interface CustomCommands {

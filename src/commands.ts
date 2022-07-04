@@ -15,7 +15,7 @@ export const defaultCommands: Command[] = [
         handler: openFile,
     },
     {
-        commandIdentifier: 'findFilesByNameInCurrentWorkspace',
+        commandIdentifier: 'findFilesByNameInAllWorkspaces',
         shellCommand: (cfg: Config) => cfg.findFilesByNameInAllWorkspacesCommand,
         outputFile: "openFile2",
         handler: openFile,
@@ -70,33 +70,38 @@ export const defaultCommands: Command[] = [
  * @param cfg Config object that contains the configuration of the extension.
  * @param terminal Terminal object that will be used to execute the commands.
  */
-export function registerCommands(commands: Command[], cfg: Config, terminal: ITerminal) {
-    commands.forEach(command => {
+export function registerCommands(commands: Command[], cfg: Config, terminal: ITerminal) : vscode.Disposable[] {
+    return commands.map(command => 
         vscode.commands.registerCommand(`${EXTENSION_NAME}.${command.commandIdentifier}`, () => {
             terminal.executeCommand(parseCommand(command, cfg));
-        });
-    });
+        })
+    );
 }
 
-export function registerCustomCommands(cfg: Config, terminal: ITerminal): Command[] {
-    var commands = parseCustomCommandToCommand(cfg.customCommands);
-    vscode.commands.registerCommand(`${EXTENSION_NAME}.customCommands`, async (commandIdentifier: string) => {
+
+/**
+ * Register all the custom commands provided by the user.
+ * @param cfg Config object that contains the configuration of the extension.
+ * @param terminal Terminal object that will be used to execute the commands.
+ */
+export function registerCustomCommands(commands: Command[], cfg: Config, terminal: ITerminal): vscode.Disposable {
+    return vscode.commands.registerCommand(`${EXTENSION_NAME}.customCommands`, async (commandIdentifier: string) => {
         if (!commandIdentifier) {
             commandIdentifier = await vscode.window.showQuickPick(cfg.customCommands.map(x => x.commandIdentifier)) ?? commandIdentifier;
         }
         var command = commands.find(x => x.commandIdentifier === commandIdentifier);
-        if (command)
+        if (command) {
             terminal.executeCommand(parseCommand(command, cfg));
+        }
     });
-    return commands;
 }
 
-function parseCustomCommandToCommand(customCommands: CustomCommands[]): Command[] {
+export function parseCustomCommandToCommand(customCommands: CustomCommands[]): Command[] {
     return customCommands.map(customCommand => ({ 
         commandIdentifier: customCommand.commandIdentifier, 
         outputFile: customCommand.outputFile, 
         shellCommand: (cfg: Config) => customCommand.shellCommand, 
         handler: executeCustomCommand,
         scriptPath: customCommand.scriptPath
-    }))
+    }));
 }

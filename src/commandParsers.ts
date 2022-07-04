@@ -28,7 +28,7 @@ function getOsPwd(): string {
         case 'win32':
             return '%cd%';
         default:
-            return '$(pwd)'
+            return '$(pwd)';
     }
 }
 

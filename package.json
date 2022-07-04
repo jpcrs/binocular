@@ -144,7 +144,7 @@
 				"binocular.command.customCommands": {
 					"description": "Custom Commands",
 					"type": "array",
-					"default": "[]",
+					"default": [],
 					"items": {
 						"type": "object",
 						"title": "Custom Command Object",

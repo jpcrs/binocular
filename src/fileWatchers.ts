@@ -9,10 +9,10 @@ import { Command, Config, ITerminal } from './types';
  * @param cfg Config, used to get the path to the temporary folder/file.
  * @param terminal Terminal object, so we can dispose it after the command is executed.
  */
-export function registerFileWatchers(commands: Command[], cfg: Config, terminal: ITerminal) {
-    commands.forEach(command => {
+export function registerFileWatchers(commands: Command[], cfg: Config, terminal: ITerminal): fs.FSWatcher[] {
+    return commands.map(command => {
         fs.writeFileSync(`${getTempFile(command.outputFile, cfg)}`, '');
-        fs.watch(`${getTempFile(command.outputFile, cfg)}`, (x, y) => fileWatcherWrapper(x, command, cfg, terminal));
+        return fs.watch(`${getTempFile(command.outputFile, cfg)}`, (x, y) => fileWatcherWrapper(x, command, cfg, terminal));
     });
 }
 

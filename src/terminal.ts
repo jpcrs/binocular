@@ -39,8 +39,9 @@ export class Terminal implements ITerminal {
     }
 
     private show() {
-        if (this.vscodeTerminal.exitStatus)
+        if (this.vscodeTerminal.exitStatus) {
             this.vscodeTerminal = vscode.window.createTerminal({name: EXTENSION_NAME, location: 2 });
+        }
         
         try {
             this.vscodeTerminal.show();

@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { defaultCommands, registerCommands, registerCustomCommands } from './commands';
+import { defaultCommands, parseCustomCommandToCommand, registerCommands, registerCustomCommands } from './commands';
 import { registerFileWatchers } from './fileWatchers';
 import { Terminal } from './terminal';
-import { createTempDir } from './folderUtils';
+import { createTempDir, deleteTempFiles } from './folderUtils';
 import { UserConfig } from './config';
+import { Config, ITerminal } from './types';
 
 
 /* Idea:
@@ -28,24 +29,54 @@ import { UserConfig } from './config';
  │           │Invokes │           │         │            │
  └───────────┘        └───────────┘         └────────────┘
 */
+let terminal: ITerminal;
+let customCommandsWatchers: fs.FSWatcher[];
+let defaultCommandsWatchers: fs.FSWatcher[];
+let defaultCommandRegistrations: vscode.Disposable[];
+let customCommandRegistration: vscode.Disposable;
+let config: Config;
+
 export function activate(context: vscode.ExtensionContext) {
+      init();
+      initCustomCommands();
+      initDefaultCommands();
+}
+
+function init() {
       createTempDir();
 
-	var config = new UserConfig();
+	config = new UserConfig();
 	vscode.workspace.onDidChangeConfiguration(e => {
-		config.updateUserSettings();
+		config.refreshUserSettings();
+            clear();
+            init();
+            initCustomCommands();
+            initDefaultCommands();
 	});
 
-	const terminal = Terminal.getInstance();
+	terminal = Terminal.getInstance();
+}
 
-      const customCommands = registerCustomCommands(config, terminal);
-      registerFileWatchers(customCommands, config, terminal);
-	registerCommands(defaultCommands, config, terminal);
-	registerFileWatchers(defaultCommands, config, terminal);
+function initDefaultCommands() {
+	defaultCommandsWatchers = registerFileWatchers(defaultCommands, config, terminal);
+	defaultCommandRegistrations = registerCommands(defaultCommands, config, terminal);
+}
+
+function initCustomCommands() {
+      const customCommands = parseCustomCommandToCommand(config.customCommands);
+      customCommandsWatchers = registerFileWatchers(customCommands, config, terminal);
+      customCommandRegistration = registerCustomCommands(customCommands, config, terminal);
+}
+
+function clear() {
+      deleteTempFiles(config);
+      terminal.dispose();
+      customCommandsWatchers.forEach(watcher => watcher.close());
+      defaultCommandsWatchers.forEach(watcher => watcher.close());
+      defaultCommandRegistrations.forEach(command => command.dispose());
+      customCommandRegistration.dispose();
 }
 
 export function deactivate() {
-      //TODO: Dispose terminal in case it's still open.
-      //TODO: Delete all the tmp files related to this session.
-      //TODO: Maybe we have to stop all the file watchers?
+      clear();
 }

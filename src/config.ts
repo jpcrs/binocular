@@ -40,7 +40,7 @@ export class UserConfig implements Config {
     /**
      * Reload the user config. Ideally invoked in the onDidChangeConfiguration event.
      */
-    public updateUserSettings() {
+    public refreshUserSettings() {
         this.additionalFolders = this.getCFG<string[]>('general.additionalSearchLocations');
         this.externalTerminal = this.getCFG<boolean>('general.useExternalTerminal');
         this.externalTerminalCustomCommand = this.getCFG<string>('command.externalTerminalCustomCommand');
@@ -63,7 +63,7 @@ export class UserConfig implements Config {
         });
     }
 
-    getCFG<T>(key: string) {
+    getCFG<T>(key: string): T {
         const userCfg = vscode.workspace.getConfiguration();
         const ret = userCfg.get<T>(`${EXTENSION_NAME}.${key}`);
         if(ret === undefined)
@@ -83,10 +83,10 @@ export class UserConfig implements Config {
 function getDefaultTerminalCommand(): string {
     switch (os.platform()) {
         case 'win32':
-            return ExternalTerminalCommands.Windows;
+            return ExternalTerminalCommands.windows;
         case 'darwin':
-            return ExternalTerminalCommands.MacOs;
+            return ExternalTerminalCommands.macOs;
         default:
-            return ExternalTerminalCommands.Linux;
+            return ExternalTerminalCommands.linux;
     }
 }
