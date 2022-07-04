@@ -1,94 +1,8 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as os from 'os';
-import { EXTENSION_NAME, ExternalTerminalCommands } from './const';
-
-/**
- * Extension configuration.
- */
-export interface Config {
-    /**
-     * Additional folders to be searched for files.
-     */
-    readonly additionalFolders: string[] | undefined,
-
-    /**
-     * Boolean flag to open the terminal in a new window.
-     */
-    readonly externalTerminal: boolean
-
-    /**
-     * Custom command to be used to open the external terminal. If not set, the default terminal command will be used based on the operating system.
-     * @see getDefaultTerminalCommand
-     */
-    readonly externalTerminalCustomCommand: string,
-
-    /**
-     * Command find files by name in the current workspace (Based on the current file in focus).
-     * @default rg --files --hidden $(pwd) | fzf --ansi -m --preview 'bat --color=always {}'
-     */
-    readonly findFilesByNameInCurrentWorkspaceCommand: string,
-
-    /**
-     * Command find files by name in all the open workspaces.
-     * @default rg --files --hidden $(pwd) # | fzf --ansi -m --preview 'bat --color=always {}'
-     * The # is a placeholder for the workspace folders.
-     */
-    readonly findFilesByNameInAllWorkspacesCommand: string,
-
-    /**
-     * Command to find files by name in all the pre-configured folders.
-     * @default rg --files --hidden $(pwd) # | fzf --ansi -m --preview 'bat --color=always {}'
-     * The # is a placeholder for the configured folders.
-     */
-    readonly findFilesByNameInConfiguredFoldersCommand: string,
-
-    /**
-     * Command to find files by content in all the folders in the current workspace (Based on the current file in focus).
-     * @default rg --column --line-number --no-heading --color=always --smart-case . $(pwd) | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'
-     */
-    readonly findFilesByContentInCurrentWorkspaceCommand: string,
-
-    /**
-     * Command to find files by content in all the folders in all the open workspaces.
-     * @default rg --column --line-number --no-heading --color=always --smart-case . $(pwd) # | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) # || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'
-     * The # is a placeholder for the workspace folders.
-     */
-    readonly findFilesByContentInAllWorkspacesCommand: string,
-
-    /**
-     * Command to find files by content in all the pre-configured folders.
-     * @default rg --column --line-number --no-heading --color=always --smart-case . $(pwd) # | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) # || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'
-     * The # is a placeholder for the configured folders.
-     */
-    readonly findFilesByContentInConfiguredFoldersCommand: string,
-
-    /**
-     * Command to add new folders to the workspace. It searches for folders that contains a .git directory inside.
-     * @default fd .git$ -td -H --absolute-path # | sed 's/\\/.git//g' | fzf -m
-     * The # is a placeholder for the configured folders.
-     */
-    readonly addFolderToWorkspaceFromConfiguredFoldersCommand: string,
-
-    /**
-     * Command to search for folders and make it the current main workspace (All the other workspaces will be closed).
-     * @default fd .git$ -td -H --absolute-path # | sed 's/\\/.git//g' | fzf
-     * The # is a placeholder for the configured folders.
-     */
-    readonly changeToWorkspaceFromConfiguredFoldersCommand: string,
-
-    /**
-     * Command to list all the open workspaces and close the selected ones.
-     * @default echo # | fzf -m
-     * The # is a placeholder for all the open workspaces.
-     */
-    readonly removeFoldersFromWorkspaceCommand: string,
-
-    /**
-     * Guid of the extension. It's used to identify the temporary files that will be used as output for the terminal commands.
-     */
-    readonly guid: string,
-}
+import { EXTENSION_NAME, ExternalTerminalCommands } from './constants';
+import { Config, CustomCommands } from './types';
 
 export class UserConfig implements Config {
     additionalFolders: string[] | undefined;
@@ -103,6 +17,7 @@ export class UserConfig implements Config {
     addFolderToWorkspaceFromConfiguredFoldersCommand: string;
     changeToWorkspaceFromConfiguredFoldersCommand: string;
     removeFoldersFromWorkspaceCommand: string;
+    customCommands: CustomCommands[];
     guid: string;
 
     constructor() {
@@ -118,6 +33,7 @@ export class UserConfig implements Config {
         this.addFolderToWorkspaceFromConfiguredFoldersCommand = this.getCFG<string>('command.addFolderToWorkspaceFromConfiguredFoldersCommand');
         this.changeToWorkspaceFromConfiguredFoldersCommand = this.getCFG<string>('command.changeToWorkspaceFromConfiguredFoldersCommand');
         this.removeFoldersFromWorkspaceCommand = this.getCFG<string>('command.removeFoldersFromWorkspaceCommand');
+        this.customCommands = this.getCFG<CustomCommands[]>('command.customCommands');
         this.guid = this.generateGuid();
     }
 
@@ -137,6 +53,7 @@ export class UserConfig implements Config {
         this.addFolderToWorkspaceFromConfiguredFoldersCommand = this.getCFG<string>('command.addFolderToWorkspaceFromConfiguredFoldersCommand');
         this.changeToWorkspaceFromConfiguredFoldersCommand = this.getCFG<string>('command.changeToWorkspaceFromConfiguredFoldersCommand');
         this.removeFoldersFromWorkspaceCommand = this.getCFG<string>('command.removeFoldersFromWorkspaceCommand');
+        this.customCommands = this.getCFG<CustomCommands[]>('command.customCommands');
     }
 
     generateGuid(): string {

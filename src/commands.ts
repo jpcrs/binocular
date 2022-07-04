@@ -1,85 +1,68 @@
 import * as vscode from 'vscode';
-import * as os from 'os';
-import { addFolderToWorkspace, changeToWorkspace, openFile, openFileAndJumpToLine, removeFromWorkspace } from './fileWatchers';
-import { getConfiguredFolders, getTempFile, getWorkspaceFolders, getWorkspaceFoldersWithLineBreak } from './folderUtils';
-import { Config } from './config';
-import { EXTENSION_NAME } from './const';
-import { ITerminal } from './terminal';
-
-/** A Command is a structure containing all the information necessary to execute the CLI command and pick a handler to interact with VSCode */
-export interface Command {
-    /** File name that will receive the output from the CLI command. It's also used to register all the filewatchers. */
-    fileName: string,
-
-    /** Handler method that will be executed by the fileWatcher whenever the @fileName has an update */
-    handler: (data: string, terminal: ITerminal) => void,
-
-    /** CLI command that will be executed in the terminal. It can be overwritten by the user */
-    configCommand: (cfg: Config) => string,
-
-    /** Parser method to override some parts of the command in the runtime, like the folders that will be used in the command. */
-    parseCommandWithParameters: (cmd: string, cfg: Config) => string,
-}
+import { addFolderToWorkspace, changeToWorkspace, executeCustomCommand, openFile, openFileAndJumpToLine, removeFromWorkspace } from './fileWatchers';
+import { EXTENSION_NAME } from './constants';
+import { Command, Config, CustomCommands, ITerminal } from './types';
+import { parseCommand } from './commandParsers';
 
 /**
  * All the commands that will be registered by the extension. The key is the name of the command and the value is the command itself.
  */
-export const defaultCommands: { [key: string]: Command } = {
-    findFilesByNameInCurrentWorkspace: {
-        configCommand: (cfg: Config) => cfg.findFilesByNameInCurrentWorkspaceCommand,
-        fileName: "openFile",
+export const defaultCommands: Command[] = [
+    {
+        commandIdentifier: 'findFilesByNameInCurrentWorkspace',
+        shellCommand: (cfg: Config) => cfg.findFilesByNameInCurrentWorkspaceCommand,
+        outputFile: "openFile",
         handler: openFile,
-        parseCommandWithParameters: (cmd: string) => cmd
     },
-    findFilesByNameInAllOpenWorkspaces: {
-        configCommand: (cfg: Config) => cfg.findFilesByNameInAllWorkspacesCommand,
-        fileName: "openFile2",
+    {
+        commandIdentifier: 'findFilesByNameInCurrentWorkspace',
+        shellCommand: (cfg: Config) => cfg.findFilesByNameInAllWorkspacesCommand,
+        outputFile: "openFile2",
         handler: openFile,
-        parseCommandWithParameters: (cmd: string) => cmd.replaceAll("#", getWorkspaceFolders())
     },
-    findFilesByNameInConfiguredFolders: {
-        configCommand: (cfg: Config) => cfg.findFilesByNameInConfiguredFoldersCommand,
-        fileName: "openFile3",
+    {
+        commandIdentifier: 'findFilesByNameInConfiguredFolders',
+        shellCommand: (cfg: Config) => cfg.findFilesByNameInConfiguredFoldersCommand,
+        outputFile: "openFile3",
         handler: openFile,
-        parseCommandWithParameters: (cmd: string, cfg: Config) => cmd.replaceAll("#", getConfiguredFolders(cfg))
     },
-    findFilesByContentInCurrentWorkspace: {
-        configCommand: (cfg: Config) => cfg.findFilesByContentInCurrentWorkspaceCommand,
-        fileName: "openFileLine",
+    {
+        commandIdentifier: 'findFilesByContentInCurrentWorkspace',
+        shellCommand: (cfg: Config) => cfg.findFilesByContentInCurrentWorkspaceCommand,
+        outputFile: "openFileLine",
         handler: openFileAndJumpToLine,
-        parseCommandWithParameters: (cmd: string) => cmd
     },
-    findFilesByContentInAllWorkspaces: {
-        configCommand: (cfg: Config) => cfg.findFilesByContentInAllWorkspacesCommand,
-        fileName: "openFileLine2",
+    {
+        commandIdentifier: 'findFilesByContentInAllWorkspaces',
+        shellCommand: (cfg: Config) => cfg.findFilesByContentInAllWorkspacesCommand,
+        outputFile: "openFileLine2",
         handler: openFileAndJumpToLine,
-        parseCommandWithParameters: (cmd: string) => cmd.replaceAll("#", getWorkspaceFolders())
     },
-    findFilesByContentInConfiguredFolders: {
-        configCommand: (cfg: Config) => cfg.findFilesByContentInConfiguredFoldersCommand,
-        fileName: "openFileLine3",
+    {
+        commandIdentifier: 'findFilesByContentInConfiguredFolders',
+        shellCommand: (cfg: Config) => cfg.findFilesByContentInConfiguredFoldersCommand,
+        outputFile: "openFileLine3",
         handler: openFileAndJumpToLine,
-        parseCommandWithParameters: (cmd: string, cfg: Config) => cmd.replaceAll("#", getConfiguredFolders(cfg))
     },
-    addFolderToWorkspaceFromConfiguredFolders: {
-        configCommand: (cfg: Config) => cfg.addFolderToWorkspaceFromConfiguredFoldersCommand,
-        fileName: "addWorkspace",
+    {
+        commandIdentifier: 'addFolderToWorkspaceFromConfiguredFolders',
+        shellCommand: (cfg: Config) => cfg.addFolderToWorkspaceFromConfiguredFoldersCommand,
+        outputFile: "addWorkspace",
         handler: addFolderToWorkspace,
-        parseCommandWithParameters: (cmd: string, cfg: Config) => cmd.replaceAll("#", getConfiguredFolders(cfg))
     },
-    changeToWorkspaceFromConfiguredFolders: {
-        configCommand: (cfg: Config) => cfg.changeToWorkspaceFromConfiguredFoldersCommand,
-        fileName: "changeWorkspace",
+    {
+        commandIdentifier: 'changeToWorkspaceFromConfiguredFolders',
+        shellCommand: (cfg: Config) => cfg.changeToWorkspaceFromConfiguredFoldersCommand,
+        outputFile: "changeWorkspace",
         handler: changeToWorkspace,
-        parseCommandWithParameters: (cmd: string, cfg: Config) => cmd.replaceAll("#", getConfiguredFolders(cfg))
     },
-    removeFoldersFromWorkspace: {
-        configCommand: (cfg: Config) => cfg.removeFoldersFromWorkspaceCommand,
-        fileName: "removeWorkspace",
+    {
+        commandIdentifier: 'removeFoldersFromWorkspace',
+        shellCommand: (cfg: Config) => cfg.removeFoldersFromWorkspaceCommand,
+        outputFile: "removeWorkspace",
         handler: removeFromWorkspace,
-        parseCommandWithParameters: (cmd: string) => cmd.replaceAll("#", getWorkspaceFoldersWithLineBreak())
     },
-};
+];
 
 /**
  * Register all the commands that will be used by the extension.
@@ -87,37 +70,33 @@ export const defaultCommands: { [key: string]: Command } = {
  * @param cfg Config object that contains the configuration of the extension.
  * @param terminal Terminal object that will be used to execute the commands.
  */
-export function registerCommands(commands: { [key: string]: Command }, cfg: Config, terminal: ITerminal) {
-    Object.entries(commands).map(command => {
-        vscode.commands.registerCommand(`${EXTENSION_NAME}.${command[0]}`, () => {
-            terminal.executeCommand(parseCommand(command[1], cfg));
+export function registerCommands(commands: Command[], cfg: Config, terminal: ITerminal) {
+    commands.forEach(command => {
+        vscode.commands.registerCommand(`${EXTENSION_NAME}.${command.commandIdentifier}`, () => {
+            terminal.executeCommand(parseCommand(command, cfg));
         });
     });
 }
 
-/**
- * Parses the command and replaces the placeholders.
- * @param cmd Command that will be executed by the terminal, with the placeholders
- * @param cfg Config that has to be used to access some configuration values, like the configured folders.
- * @returns Final command that will be executed by the terminal.
- */
-function parseCommand(cmd: Command, cfg: Config): string {
-    const configuredCommand = cmd.configCommand(cfg).replaceAll("@", getOsPwd());
-
-    if (cfg.externalTerminal) {
-        const commandToExecute = `${cmd.parseCommandWithParameters(cfg.externalTerminalCustomCommand.replaceAll("#", configuredCommand), cfg)} > ${getTempFile(cmd.fileName, cfg)}`;
-        return commandToExecute;
-    }
-
-    const commandToExecute = `${cmd.parseCommandWithParameters(configuredCommand, cfg)} > ${getTempFile(cmd.fileName, cfg)}`;
-    return commandToExecute;
+export function registerCustomCommands(cfg: Config, terminal: ITerminal): Command[] {
+    var commands = parseCustomCommandToCommand(cfg.customCommands);
+    vscode.commands.registerCommand(`${EXTENSION_NAME}.customCommands`, async (commandIdentifier: string) => {
+        if (!commandIdentifier) {
+            commandIdentifier = await vscode.window.showQuickPick(cfg.customCommands.map(x => x.commandIdentifier)) ?? commandIdentifier;
+        }
+        var command = commands.find(x => x.commandIdentifier === commandIdentifier);
+        if (command)
+            terminal.executeCommand(parseCommand(command, cfg));
+    });
+    return commands;
 }
 
-function getOsPwd(): string {
-    switch (os.platform()) {
-        case 'win32':
-            return '%cd%';
-        default:
-            return '$(pwd)'
-    }
+function parseCustomCommandToCommand(customCommands: CustomCommands[]): Command[] {
+    return customCommands.map(customCommand => ({ 
+        commandIdentifier: customCommand.commandIdentifier, 
+        outputFile: customCommand.outputFile, 
+        shellCommand: (cfg: Config) => customCommand.shellCommand, 
+        handler: executeCustomCommand,
+        scriptPath: customCommand.scriptPath
+    }))
 }

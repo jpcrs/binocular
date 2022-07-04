@@ -1,21 +1,6 @@
 import * as vscode from 'vscode';
-import { EXTENSION_NAME } from './const';
-
-/**
- * VSCode terminal wrapper used to execute our commands.
- */
-export interface ITerminal {
-    /**
-     * Receives a command, created a terminal if necessary and executes it.
-     * @param cmd Command to be executed.
-     */
-    executeCommand(cmd: string): void;
-
-    /**
-     * Dispose the terminal
-     */
-    dispose(): void;
-}
+import { EXTENSION_NAME } from './constants';
+import { ITerminal } from './types';
 
 export class Terminal implements ITerminal {
     private static instance: Terminal;
@@ -40,29 +25,27 @@ export class Terminal implements ITerminal {
         this.vscodeTerminal.sendText(cmd);
     }
 
-    /**
-     * TODO: Check why this is not setting the exitStatus.
-     */
     public dispose() {
         this.vscodeTerminal.dispose();
     }
     
     private listenTerminalFocusEvent() {
-        const disposable = vscode.window.onDidChangeTerminalState(x => {
-            if (x.name === EXTENSION_NAME){
-                x.show();
+        const disposable = vscode.window.onDidChangeTerminalState(terminal => {
+            if (terminal.name === EXTENSION_NAME){
+                terminal.show();
             }
             disposable.dispose();
         });
     }
 
-    /**
-     * TODO: After we fix the exitStatus, we can stop using the try catch to discover if we have to create a new terminal or not.
-     */
     private show() {
+        if (this.vscodeTerminal.exitStatus)
+            this.vscodeTerminal = vscode.window.createTerminal({name: EXTENSION_NAME, location: 2 });
+        
         try {
             this.vscodeTerminal.show();
-        } catch (e) {
+        }
+        catch(e) { // It'll throw in case it's disposed. Apparently vscode doesn't have an API to check if it's disposed or not.
             this.vscodeTerminal = vscode.window.createTerminal({name: EXTENSION_NAME, location: 2 });
             this.vscodeTerminal.show();
         }

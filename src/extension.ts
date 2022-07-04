@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
-import { defaultCommands, registerCommands } from './commands';
-import { FileHandler, registerFileWatchers } from './fileWatchers';
-import { UserConfig } from './config';
+import * as fs from 'fs';
+import { defaultCommands, registerCommands, registerCustomCommands } from './commands';
+import { registerFileWatchers } from './fileWatchers';
 import { Terminal } from './terminal';
+import { createTempDir } from './folderUtils';
+import { UserConfig } from './config';
 
 
 /* Idea:
@@ -27,7 +29,7 @@ import { Terminal } from './terminal';
  └───────────┘        └───────────┘         └────────────┘
 */
 export function activate(context: vscode.ExtensionContext) {
-	let fileHandlers = Object.entries(defaultCommands).map(x => <FileHandler>{fileName: x[1].fileName, handler: x[1].handler});
+      createTempDir();
 
 	var config = new UserConfig();
 	vscode.workspace.onDidChangeConfiguration(e => {
@@ -36,8 +38,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const terminal = Terminal.getInstance();
 
+      const customCommands = registerCustomCommands(config, terminal);
+      registerFileWatchers(customCommands, config, terminal);
 	registerCommands(defaultCommands, config, terminal);
-	registerFileWatchers(fileHandlers, config, terminal);
+	registerFileWatchers(defaultCommands, config, terminal);
 }
 
 export function deactivate() {
