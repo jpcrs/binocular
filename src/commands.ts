@@ -15,7 +15,7 @@ export const defaultCommands: Command[] = [
         handler: openFile,
     },
     {
-        commandIdentifier: 'findFilesByNameInAllOpenWorkspaces',
+        commandIdentifier: 'findFilesByNameInAllWorkspaces',
         shellCommand: (cfg: Config) => cfg.findFilesByNameInAllWorkspacesCommand,
         outputFile: "openFile2",
         handler: openFile,

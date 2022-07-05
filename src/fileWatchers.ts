@@ -34,10 +34,11 @@ function fileWatcherWrapper(event: fs.WatchEventType, command: Command, config: 
 }
 
 
-export function executeCustomCommand(data: string, command: Command, terminal: ITerminal) {
+export async function executeCustomCommand(data: string, command: Command, terminal: ITerminal) {
     let scriptContent = fs.readFileSync(command.scriptPath!, {encoding:'utf8', flag:'r'});
-    var func = new Function(scriptContent)();
-    func(data, vscode, terminal);
+    const asyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+    var func = await new asyncFunction(scriptContent)();
+    await func(data, vscode, terminal);
 }
 
 /**
