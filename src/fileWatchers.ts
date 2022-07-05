@@ -2,6 +2,7 @@ import * as fs from 'fs' ;
 import * as vscode from 'vscode';
 import { getTempFile } from './folderUtils';
 import { Command, Config, ITerminal } from './types';
+import * as os from 'os';
 
 /**
  * Register file watchers for each one of our commands.
@@ -47,7 +48,7 @@ export async function executeCustomCommand(data: string, command: Command, termi
  * @param terminal Terminal to be disposed after the command is executed.
  */
 export function openFile(data: string, command: Command, terminal: ITerminal) {
-    const filePaths = data.split('\n').filter(s => s !== '');
+    const filePaths = data.split(os.EOL).filter(s => s !== '');
     filePaths.forEach(file => {
         vscode.window.showTextDocument(vscode.Uri.file(file), { preview: false });
     });
@@ -60,9 +61,9 @@ export function openFile(data: string, command: Command, terminal: ITerminal) {
  * @param terminal Terminal to be disposed after the command is executed.
  */
 export function openFileAndJumpToLine(data: string, command: Command, terminal: ITerminal) {
-    const filePaths = data.split('\n').filter(s => s !== '');
+    const filePaths = data.split(os.EOL).filter(s => s !== '');
     filePaths.forEach(file => {
-        const fileInfo = file.split(':'); // [0] = file path, [1] = line number
+        const fileInfo = file.split('::'); // [0] = file path, [1] = line number
         vscode.window.showTextDocument(vscode.Uri.file(fileInfo[0]), {
             selection: new vscode.Range(parseInt(fileInfo[1]) - 1, 0, parseInt(fileInfo[1]) - 1, 0), preview: false
         });
@@ -77,7 +78,7 @@ export function openFileAndJumpToLine(data: string, command: Command, terminal: 
  */
 export function addFolderToWorkspace(data: string, command: Command, terminal: ITerminal) {
     var existingWorkspaces = vscode.workspace.workspaceFolders?.map(x => x.uri.fsPath);
-    const files = data.split('\n').filter(s => s !== '' && !existingWorkspaces?.includes(s)).map(x => ({
+    const files = data.split(os.EOL).filter(s => s !== '' && !existingWorkspaces?.includes(s)).map(x => ({
         uri: vscode.Uri.file(x),
         name: x.split('/').pop()
     }));
@@ -92,7 +93,7 @@ export function addFolderToWorkspace(data: string, command: Command, terminal: I
  * @param terminal Terminal to be disposed after the command is executed.
  */
 export function changeToWorkspace(data: string, command: Command, terminal: ITerminal) {
-    const filePaths = data.split('\n').filter(s => s !== '');
+    const filePaths = data.split(os.EOL).filter(s => s !== '');
     filePaths.forEach(file => {
         vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(file));
     });
@@ -105,7 +106,7 @@ export function changeToWorkspace(data: string, command: Command, terminal: ITer
  * @param terminal Terminal to be disposed after the command is executed.
  */
 export function removeFromWorkspace(data: string, command: Command, terminal: ITerminal) {
-    const filePaths = data.split('\n').filter(s => s !== '');
+    const filePaths = data.split(os.EOL).filter(s => s !== '');
     filePaths.forEach(async file => {
         const disposable = vscode.workspace.onDidChangeWorkspaceFolders(e => {
             const workspaceIndex = vscode.workspace.workspaceFolders?.findIndex(x => x.uri.fsPath === file);

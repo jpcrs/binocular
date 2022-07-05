@@ -114,31 +114,31 @@
 					"description": "Find files by content (Current workspace)",
 					"markdownDescription": "Command to find files by content in the current working project.",
 					"type": "string",
-					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
+					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} | {sedSkipDelimiter} | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
 				},
 				"binocular.command.findFilesByContentInAllWorkspacesCommand": {
 					"description": "Find files by content (All workspaces)",
 					"markdownDescription": "Command to find files by content in all open projects.",
 					"type": "string",
-					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} {workspaceFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) {workspaceFolders} || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
+					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} {workspaceFolders} | {sedSkipDelimiter} | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
 				},
 				"binocular.command.findFilesByContentInConfiguredFoldersCommand": {
 					"description": "Find files by content (Configured folders)",
 					"markdownDescription": "Command to find files by content in all configured folders.",
 					"type": "string",
-					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} {configuredFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) {configuredFolders} || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
+					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} {configuredFolders} | {sedSkipDelimiter} | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
 				},
 				"binocular.command.addFolderToWorkspaceFromConfiguredFoldersCommand": {
 					"description": "Add folder to workspace (Configured folders)",
 					"markdownDescription": "Command to add folder to workspace from configured folders.",
 					"type": "string",
-					"default": "fdfind .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf -m"
+					"default": "fdfind .git$ -td -H --absolute-path {configuredFolders} | {sedRemoveGit} | fzf -m"
 				},
 				"binocular.command.changeToWorkspaceFromConfiguredFoldersCommand": {
 					"description": "Change to workspace (Configured folders)",
 					"markdownDescription": "Command to change to workspace from configured folders.",
 					"type": "string",
-					"default": "fdfind .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf"
+					"default": "fdfind .git$ -td -H --absolute-path {configuredFolders} | {sedRemoveGit} | fzf"
 				},
 				"binocular.command.removeFoldersFromWorkspaceCommand": {
 					"description": "Remove folders from workspace",

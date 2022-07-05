@@ -15,18 +15,20 @@ export function parseCommand(cmd: Command, cfg: Config): string {
     shellCommand = shellCommand.replaceAll("{workspaceFolders}", getWorkspaceFolders());
     shellCommand = shellCommand.replaceAll("{configuredFolders}", getConfiguredFolders(cfg));
     shellCommand = shellCommand.replaceAll("{workspaceFoldersLineBreak}", getWorkspaceFoldersWithLineBreak());
+    shellCommand = shellCommand.replaceAll("{sedRemoveGit}", sedRemoveGit());
+    shellCommand = shellCommand.replaceAll("{sedSkipDelimiter}", sedSkipDelimiter());
 
     if (cfg.externalTerminal) {
-        return `${cfg.externalTerminalCustomCommand.replaceAll("#", `${shellCommand} > ${getTempFile(cmd.outputFile, cfg)}`)}`;
+        return `${cfg.externalTerminalCustomCommand.replaceAll("#", `${shellCommand} ${tee()} ${getTempFile(cmd.outputFile, cfg)}`)}`;
     }
 
-    return `${shellCommand} > ${getTempFile(cmd.outputFile, cfg)}`;
+    return `${shellCommand} ${tee()} ${getTempFile(cmd.outputFile, cfg)}`;
 }
 
 function getOsPwd(): string {
     switch (os.platform()) {
         case 'win32':
-            return '%cd%';
+            return '(pwd).path';
         default:
             return '$(pwd)';
     }
@@ -60,5 +62,35 @@ function getWorkspaceFoldersWithLineBreak(): string {
     if (!workspaceFolders) {
         return '';
     }
+    if (os.platform() === 'win32') {
+        return `\"${workspaceFolders.map(folder => folder.uri.fsPath).join("\" \"")}\"`;
+    }
+
     return workspaceFolders.map(folder => folder.uri.fsPath).join('\\\\n');
+}
+
+function tee(): string {
+    switch(os.platform()) {
+        case 'win32':
+            return '| out-file -encoding ASCII';
+        default:
+            return '>';
+    }
+}
+
+function sedRemoveGit(): string {
+    switch(os.platform()) {
+        case 'win32':
+            return `sed 's/\\\\.git\\\\//g'`;
+        default:
+            return `sed 's/\\/.git//g'`;
+    }
+}
+function sedSkipDelimiter(): string {
+    switch(os.platform()) {
+        case 'win32':
+            return `sed 's/:/::/2g'`;
+        default:
+            return `sed 's/:/::/g'`;
+    }
 }
