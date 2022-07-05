@@ -1,7 +1,11 @@
 {
-  "name": "binocular",
-	"displayName": "binocular",
+	"name": "binocular",
+	"displayName": "Binocular",
+	"publisher": "jpcrs",
 	"description": "Not exactly a telescope, but it's useful sometimes. Extension to search/navigate through files and workspaces.",
+	"repository": {
+		"url": "https://github.com/jpcrs/Binocular"
+	},
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.68.0"
@@ -10,18 +14,19 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:binocular.findFilesByNameInCurrentWorkspace",
+		"onCommand:binocular.findFilesByNameInCurrentWorkspace",
 		"onCommand:binocular.findFilesByNameInAllWorkspaces",
 		"onCommand:binocular.findFilesByNameInConfiguredFolders",
 
-        "onCommand:binocular.findFilesByContentInCurrentWorkspace",
+		"onCommand:binocular.findFilesByContentInCurrentWorkspace",
 		"onCommand:binocular.findFilesByContentInAllWorkspaces",
 		"onCommand:binocular.findFilesByContentInConfiguredFolders",
 
 		"onCommand:binocular.addFolderToWorkspaceFromConfiguredFolders",
 		"onCommand:binocular.changeToWorkspaceFromConfiguredFolders",
-        "onCommand:binocular.removeFoldersFromWorkspace",
-        "onCommand:binocular.customCommands"
+
+		"onCommand:binocular.removeFoldersFromWorkspace",
+		"onCommand:binocular.customCommands"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -168,9 +173,8 @@
 						}
 					}
 				}
-			}	
+			}
 		}
-
 	},
 	"extensionDependencies": [
 		"vscode.git"
