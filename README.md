@@ -116,7 +116,7 @@ It's possible to create new custom commands to be executed using the `binocular.
 The extension will dynamically invoke any method with signature `async function customFunction(data, vscode, terminal)`.
 
 - #### Example:
-<details open>
+<details>
 <summary>This is an extension that fetches the git log and let's you checkout the git hash.</summary>
 <br>
 
