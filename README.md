@@ -27,6 +27,9 @@
 ## What's Binocular?
 `Binocular` is an extension to improve the file navigation and workspace management in VSCode. Inspired by [Telescope](https://github.com/nvim-telescope/telescope.nvim).
 
+### Motivation?
+My RSI.
+
 ## How does it work?
 Binocular register **commands** and **file-watchers** during startup, a command contains a **shell instruction** to be executed in a terminal and a **file** to receive the output. The **file-watchers** listen to those files and interacts with the vscode api whenever there's new input in the files.
 
