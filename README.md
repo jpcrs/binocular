@@ -28,7 +28,9 @@
 `Binocular` is an extension to improve the file navigation and workspace management in VSCode. Inspired by [Telescope](https://github.com/nvim-telescope/telescope.nvim).
 
 ## How does it work?
-Binocular register `commands` and `file-watchers` during startup, a command contains a `shell instruction` to be executed in a terminal and a `file` to receive the output. The `file-watchers` listen to those files and interacts with the vscode api whenever there's new input in the files.
+Binocular register **commands** and **file-watchers** during startup, a command contains a **shell instruction** to be executed in a terminal and a **file** to receive the output. The **file-watchers** listen to those files and interacts with the vscode api whenever there's new input in the files.
+
+![asciiflow](./images/asciiflow.png)
 
 ## Dependencies
 All default commands can be configured/modified, so there's no hard dependencies to run the plugin, but the default shell commands configuration have a set of dependencies, they're:
@@ -55,68 +57,53 @@ Binocular exposes some placeholder methods that can be used in the configuration
 - ## Search by file name
 ![Search for file name in the current workspace](./images/SearchByFileNameCurrentWorkspace.gif)
 
-- #### `binocular.findFilesByNameInCurrentWorkspace` 
+- `binocular.findFilesByNameInCurrentWorkspace` 
     - Find files by name in the workspace of the file that is open in VSCode. Example: If there's 4 workspace folders open in vscode and you're editing a file that belongs to workspace1, it'll just search for files that belongs to. 
     - **Default command executed**: `rg --files --hidden {pwd} | fzf --ansi -m --preview 'bat --color=always {}'`
----
-- #### `binocular.findFilesByNameInAllWorkspaces`
+- `binocular.findFilesByNameInAllWorkspaces`
     - Find files by name in all the workspaces currently open. 
-    - **Default command executed**: rg --files --hidden {pwd} {workspaceFolders} | fzf --ansi -m --preview 'bat --color=always {}'
----
-
-- #### `binocular.findFilesByNameInConfiguredFolders` 
+    - **Default command executed**: `rg --files --hidden {pwd} {workspaceFolders} | fzf --ansi -m --preview 'bat --color=always {}'`
+- `binocular.findFilesByNameInConfiguredFolders` 
     - Find files by name in all the pre-configured folders (binocular.general.additionalSearchLocations). 
-    - **Default command executed**: rg --files --hidden {pwd} {configuredFolders} | fzf --ansi -m --preview 'bat --color=always {}'
----
-<br>
+    - **Default command executed**: `rg --files --hidden {pwd} {configuredFolders} | fzf --ansi -m --preview 'bat --color=always {}'`
 
 - ## Search by file content
 ![Search by file content in the current workspace](./images/SearchByFileContentCurrentWorkspace.gif)
 
-- #### `binocular.findFilesByContentInCurrentWorkspace` 
+- `binocular.findFilesByContentInCurrentWorkspace` 
     - Find files by content in the workspace of the file that is open in VSCode. Example: If there's 4 workspace folders open in vscode and you're editing a file that belongs to workspace1, it'll just search for files that belongs to. 
-    - **Default command executed**: rg --column --line-number --no-heading --color=always --smart-case . {pwd} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'
----
-- #### `binocular.findFilesByContentInAllWorkspaces` 
+    - **Default command executed**: `rg --column --line-number --no-heading --color=always --smart-case . {pwd} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'`
+- `binocular.findFilesByContentInAllWorkspaces` 
     - Find files by content in all the workspaces currently open. 
-    - **Default command executed**: rg --column --line-number --no-heading --color=always --smart-case . {pwd} {workspaceFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) {workspaceFolders} || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'
-
----
-- #### `binocular.findFilesByContentInConfiguredFolders` 
+    - **Default command executed**: `rg --column --line-number --no-heading --color=always --smart-case . {pwd} {workspaceFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) {workspaceFolders} || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'`
+- `binocular.findFilesByContentInConfiguredFolders` 
     - Find files by content in all the pre-configured folders (binocular.general.additionalSearchLocations). 
-    - **Default command executed**: rg --column --line-number --no-heading --color=always --smart-case . {pwd} {configuredFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) {configuredFolders} || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'
----
-<br>
+    - **Default command executed**: `rg --column --line-number --no-heading --color=always --smart-case . {pwd} {configuredFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) {configuredFolders} || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'`
 
 - ## Add or remove folder from workspace
 ![Add or remove folder from workspace](./images/AddRemoveWorkspace.gif)
 
-- #### `binocular.addFolderToWorkspaceFromConfiguredFolders` 
+- `binocular.addFolderToWorkspaceFromConfiguredFolders` 
     - Search for all folders that contains a `.git` folder inside and add to the workspace (it just searches in the binocular.general.additionalSearchLocations to avoid bloat). 
-    - **Default command executed**: fdfind .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf -m
----
-- #### `binocular.removeFoldersFromWorkspace` 
+    - **Default command executed**: `fdfind .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf -m`
+- `binocular.removeFoldersFromWorkspace` 
     - List all the open workspaces and let you remove them. 
-    - **Default command executed**: echo {workspaceFoldersLineBreak} | fzf -m
----
-<br>
+    - **Default command executed**: `echo {workspaceFoldersLineBreak} | fzf -m`
 
 - ## Change to workspace
 ![Change to workspace](./images/ChangeToWorkspace.gif)
 - #### `binocular.changeToWorkspaceFromConfiguredFolders` 
     - Search for all folders that contains a `.git` folder inside and change to the workspace (it just searches in the binocular.general.additionalSearchLocations to avoid bloat). 
-    - **Default command executed**: fdfind .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf
----
-<br>
+    - **Default command executed**: `fdfind .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf`
 
 ## External Terminal
 VSCode integrated terminal has some rendering performance problem, it uses a lot of resources when there's too much information being re-rendered quickly. It's possible to force the execution of the shell commands in an external shell.
 
 By default, the command to invoke an external terminal is based on the Operating System in use.
 
-- Linux: `x-terminal-emulator -- sh -c "#"`
-- macOS: `osascript -e 'tell app "Terminal" to do script "ls" & activate & do script "#;exit"`
-- Windows: `start cmd /k "# & exit /s"`
+- **Linux**: `x-terminal-emulator -- sh -c "#"`
+- **macOS**: `osascript -e 'tell app "Terminal" to do script "ls" & activate & do script "#;exit"`
+- **Windows**: `start cmd /k "# & exit /s"`
 
 The command can be overwriten using the `binocular.command.externalTerminalCustomCommand` config. An `#` is used as placeholder to choose where the actual shell command will be replaced.
 
