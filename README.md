@@ -57,16 +57,16 @@ Binocular exposes some placeholder methods that can be used in the configuration
 
 - #### `binocular.findFilesByNameInCurrentWorkspace` 
     - Find files by name in the workspace of the file that is open in VSCode. Example: If there's 4 workspace folders open in vscode and you're editing a file that belongs to workspace1, it'll just search for files that belongs to. 
-    - `Default command executed`: `rg --files --hidden {pwd} | fzf --ansi -m --preview 'bat --color=always {}'`
+    - **Default command executed**: `rg --files --hidden {pwd} | fzf --ansi -m --preview 'bat --color=always {}'`
 ---
 - #### `binocular.findFilesByNameInAllWorkspaces`
     - Find files by name in all the workspaces currently open. 
-    - `Default command executed`: rg --files --hidden {pwd} {workspaceFolders} | fzf --ansi -m --preview 'bat --color=always {}'
+    - **Default command executed**: rg --files --hidden {pwd} {workspaceFolders} | fzf --ansi -m --preview 'bat --color=always {}'
 ---
 
 - #### `binocular.findFilesByNameInConfiguredFolders` 
     - Find files by name in all the pre-configured folders (binocular.general.additionalSearchLocations). 
-    - `Default command executed`: rg --files --hidden {pwd} {configuredFolders} | fzf --ansi -m --preview 'bat --color=always {}'
+    - **Default command executed**: rg --files --hidden {pwd} {configuredFolders} | fzf --ansi -m --preview 'bat --color=always {}'
 ---
 <br>
 
@@ -75,16 +75,16 @@ Binocular exposes some placeholder methods that can be used in the configuration
 
 - #### `binocular.findFilesByContentInCurrentWorkspace` 
     - Find files by content in the workspace of the file that is open in VSCode. Example: If there's 4 workspace folders open in vscode and you're editing a file that belongs to workspace1, it'll just search for files that belongs to. 
-    - `Default command executed`: rg --column --line-number --no-heading --color=always --smart-case . {pwd} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'
+    - **Default command executed**: rg --column --line-number --no-heading --color=always --smart-case . {pwd} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'
 ---
 - #### `binocular.findFilesByContentInAllWorkspaces` 
     - Find files by content in all the workspaces currently open. 
-    - `Default command executed`: rg --column --line-number --no-heading --color=always --smart-case . {pwd} {workspaceFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) {workspaceFolders} || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'
+    - **Default command executed**: rg --column --line-number --no-heading --color=always --smart-case . {pwd} {workspaceFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) {workspaceFolders} || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'
 
 ---
 - #### `binocular.findFilesByContentInConfiguredFolders` 
     - Find files by content in all the pre-configured folders (binocular.general.additionalSearchLocations). 
-    - `Default command executed`: rg --column --line-number --no-heading --color=always --smart-case . {pwd} {configuredFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) {configuredFolders} || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'
+    - **Default command executed**: rg --column --line-number --no-heading --color=always --smart-case . {pwd} {configuredFolders} | fzf -m --delimiter : --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} $(pwd) {configuredFolders} || true' --ansi --preview 'bat --color=always {1} --highlight-line {2}'
 ---
 <br>
 
@@ -93,11 +93,11 @@ Binocular exposes some placeholder methods that can be used in the configuration
 
 - #### `binocular.addFolderToWorkspaceFromConfiguredFolders` 
     - Search for all folders that contains a `.git` folder inside and add to the workspace (it just searches in the binocular.general.additionalSearchLocations to avoid bloat). 
-    - `Default command executed`: fdfind .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf -m
+    - **Default command executed**: fdfind .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf -m
 ---
 - #### `binocular.removeFoldersFromWorkspace` 
     - List all the open workspaces and let you remove them. 
-    - `Default command executed`: echo {workspaceFoldersLineBreak} | fzf -m
+    - **Default command executed**: echo {workspaceFoldersLineBreak} | fzf -m
 ---
 <br>
 
@@ -105,7 +105,7 @@ Binocular exposes some placeholder methods that can be used in the configuration
 ![Change to workspace](./images/ChangeToWorkspace.gif)
 - #### `binocular.changeToWorkspaceFromConfiguredFolders` 
     - Search for all folders that contains a `.git` folder inside and change to the workspace (it just searches in the binocular.general.additionalSearchLocations to avoid bloat). 
-    - `Default command executed`: fdfind .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf
+    - **Default command executed**: fdfind .git$ -td -H --absolute-path {configuredFolders} | sed 's/\\/.git//g' | fzf
 ---
 <br>
 
