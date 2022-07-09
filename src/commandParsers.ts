@@ -13,7 +13,8 @@ const handlers: { [key: string]: (cfg: Config) => string } = {
     '{configuredFolders}': getConfiguredFolders,
     '{workspaceFoldersLineBreak}': getWorkspaceFoldersWithLineBreak,
     '{sedRemoveGitFromString}': sedRemoveGit,
-    '{sedReplaceSkipDelimiter}': sedSkipDelimiter,
+    '{sedReplaceDelimiter}': sedReplaceDelimiter,
+    '{awkInsertLineRange}': awkInsertLineRange
 };
 
 /**
@@ -101,11 +102,21 @@ function sedRemoveGit(): string {
             return `sed 's/\\/.git//g'`;
     }
 }
-function sedSkipDelimiter(): string {
+
+function sedReplaceDelimiter(): string {
     switch(os.platform()) {
         case 'win32':
             return `sed 's/:/::/2g'`;
         default:
             return `sed 's/:/::/g'`;
+    }
+}
+
+function awkInsertLineRange(): string {
+    switch(os.platform()) {
+        case 'win32':
+            return `awk -F '::' '{ print $1\\\"::\\\"$2\\\"::\\\"($2-30 >= 0 ? $2-30 : 0)\\\"::\\\"$2+30\\\"::\\\"$3\\\"::\\\"$4 }'`;
+        default:
+            return `awk -F '::' '{ print $1\"::\"$2\"::\"($2-30 >= 0 ? $2-30 : 0)\"::\"$2+30\"::\"$3\"::\"$4 }'`;
     }
 }

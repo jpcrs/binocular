@@ -14,6 +14,7 @@
 - [Creating Shortcuts](#create-shortcuts)
 - [External Terminal](#external-terminal)
 - [Custom Commands](#custom-commands)
+- [Current Problems](#current-problems)
 
 ## What's Binocular?
 `Binocular` is an extension to improve the file navigation and workspace management in VSCode. Inspired by [Telescope](https://github.com/nvim-telescope/telescope.nvim).
@@ -230,5 +231,6 @@ Result when using the `alt+l` shortcut:
 
 ## Current Problems
 - Tests :)
+- Apparently Powershell startup is really slow.
 - Dirty approach to change the delimiter to `::` so it makes my life easier hardcoding `const fileInfo = file.split('::');`.
 - Terrible way of invoking custom scripts, but lazy to change.

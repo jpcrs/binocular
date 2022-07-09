@@ -64,17 +64,17 @@
 							"script": "openFile"
 						},
 						{
-							"shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {pwd} | sed 's/:/::/g' | awk -F '::' '{ print $1\"::\"$2\"::\"($2-30 >= 0 ? $2-30 : 0)\"::\"$2+30\"::\"$3\"::\"$4 }' | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
+							"shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {pwd} | {sedReplaceDelimiter} | {awkInsertLineRange} | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
 							"commandIdentifier": "Find files by content (Current folder)",
 							"script": "openFileAndJumpToLine"
 						},
 						{
-							"shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {workspaceFolders} | sed 's/:/::/g' | awk -F '::' '{ print $1\"::\"$2\"::\"($2-30 >= 0 ? $2-30 : 0)\"::\"$2+30\"::\"$3\"::\"$4 }' | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
+							"shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {workspaceFolders} | {sedReplaceDelimiter} | {awkInsertLineRange} | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
 							"commandIdentifier": "Find files by content (All open folders)",
 							"script": "openFileAndJumpToLine"
 						},
 						{
-							"shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {configuredFolders} | sed 's/:/::/g' | awk -F '::' '{ print $1\"::\"$2\"::\"($2-30 >= 0 ? $2-30 : 0)\"::\"$2+30\"::\"$3\"::\"$4 }' | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
+							"shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {configuredFolders} | {sedReplaceDelimiter} | {awkInsertLineRange} | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
 							"commandIdentifier": "Find files by content (Configured folders)",
 							"script": "openFileAndJumpToLine"
 						},
