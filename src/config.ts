@@ -2,39 +2,22 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as os from 'os';
 import { EXTENSION_NAME, ExternalTerminalCommands } from './constants';
-import { Config, CustomCommands } from './types';
+import { Config, Command } from './types';
+import { setCommandHandler } from './commands';
 
 export class UserConfig implements Config {
     additionalFolders: string[] | undefined;
     externalTerminal: boolean;
     externalTerminalCustomCommand: string;
-    findFilesByNameInCurrentWorkspaceCommand: string;
-    findFilesByNameInAllWorkspacesCommand: string;
-    findFilesByNameInConfiguredFoldersCommand: string;
-    findFilesByContentInCurrentWorkspaceCommand: string;
-    findFilesByContentInAllWorkspacesCommand: string;
-    findFilesByContentInConfiguredFoldersCommand: string;
-    addFolderToWorkspaceFromConfiguredFoldersCommand: string;
-    changeToWorkspaceFromConfiguredFoldersCommand: string;
-    removeFoldersFromWorkspaceCommand: string;
-    customCommands: CustomCommands[];
-    guid: string;
+    commands: Command[];
 
     constructor() {
         this.additionalFolders = this.getCFG<string[]>('general.additionalSearchLocations');
         this.externalTerminal = this.getCFG<boolean>('general.useExternalTerminal');
         this.externalTerminalCustomCommand = this.getCFG<string>('command.externalTerminalCustomCommand') !== '' ? this.getCFG<string>('command.externalTerminalCustomCommand') : getDefaultTerminalCommand();
-        this.findFilesByNameInCurrentWorkspaceCommand = this.getCFG<string>('command.findFilesByNameInCurrentWorkspaceCommand');
-        this.findFilesByNameInAllWorkspacesCommand = this.getCFG<string>('command.findFilesByNameInAllWorkspacesCommand');
-        this.findFilesByNameInConfiguredFoldersCommand = this.getCFG<string>('command.findFilesByNameInConfiguredFoldersCommand');
-        this.findFilesByContentInCurrentWorkspaceCommand = this.getCFG<string>('command.findFilesByContentInCurrentWorkspaceCommand');
-        this.findFilesByContentInAllWorkspacesCommand = this.getCFG<string>('command.findFilesByContentInAllWorkspacesCommand');
-        this.findFilesByContentInConfiguredFoldersCommand = this.getCFG<string>('command.findFilesByContentInConfiguredFoldersCommand');
-        this.addFolderToWorkspaceFromConfiguredFoldersCommand = this.getCFG<string>('command.addFolderToWorkspaceFromConfiguredFoldersCommand');
-        this.changeToWorkspaceFromConfiguredFoldersCommand = this.getCFG<string>('command.changeToWorkspaceFromConfiguredFoldersCommand');
-        this.removeFoldersFromWorkspaceCommand = this.getCFG<string>('command.removeFoldersFromWorkspaceCommand');
-        this.customCommands = this.getCFG<CustomCommands[]>('command.customCommands');
-        this.guid = this.generateGuid();
+        this.commands = this.getCFG<Command[]>('command.commands');
+        this.setCommandOutputFiles(this.commands);
+        setCommandHandler(this.commands);
     }
 
     /**
@@ -44,22 +27,17 @@ export class UserConfig implements Config {
         this.additionalFolders = this.getCFG<string[]>('general.additionalSearchLocations');
         this.externalTerminal = this.getCFG<boolean>('general.useExternalTerminal');
         this.externalTerminalCustomCommand = this.getCFG<string>('command.externalTerminalCustomCommand');
-        this.findFilesByNameInCurrentWorkspaceCommand = this.getCFG<string>('command.findFilesByNameInCurrentWorkspaceCommand');
-        this.findFilesByNameInAllWorkspacesCommand = this.getCFG<string>('command.findFilesByNameInAllWorkspacesCommand');
-        this.findFilesByNameInConfiguredFoldersCommand = this.getCFG<string>('command.findFilesByNameInConfiguredFoldersCommand');
-        this.findFilesByContentInCurrentWorkspaceCommand = this.getCFG<string>('command.findFilesByContentInCurrentWorkspaceCommand');
-        this.findFilesByContentInAllWorkspacesCommand = this.getCFG<string>('command.findFilesByContentInAllWorkspacesCommand');
-        this.findFilesByContentInConfiguredFoldersCommand = this.getCFG<string>('command.findFilesByContentInConfiguredFoldersCommand');
-        this.addFolderToWorkspaceFromConfiguredFoldersCommand = this.getCFG<string>('command.addFolderToWorkspaceFromConfiguredFoldersCommand');
-        this.changeToWorkspaceFromConfiguredFoldersCommand = this.getCFG<string>('command.changeToWorkspaceFromConfiguredFoldersCommand');
-        this.removeFoldersFromWorkspaceCommand = this.getCFG<string>('command.removeFoldersFromWorkspaceCommand');
-        this.customCommands = this.getCFG<CustomCommands[]>('command.customCommands');
+        this.commands = this.getCFG<Command[]>('command.commands');
+        this.setCommandOutputFiles(this.commands);
+        setCommandHandler(this.commands);
     }
 
-    generateGuid(): string {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
+    setCommandOutputFiles(commands: Command[]) {
+        commands.forEach(command => {
+            command.outputFile = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
         });
     }
 

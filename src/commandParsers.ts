@@ -1,7 +1,20 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
 import { getTempFile } from "./folderUtils";
 import { Command, Config } from "./types";
 import * as os from 'os';
+
+/**
+ * List of handler commands that will be used to parse the shell command with the right syntax.
+ */
+const handlers: { [key: string]: (cfg: Config) => string } = {
+    '{pwd}': getOsPwd,
+    '{workspaceFolders}': getWorkspaceFolders,
+    '{configuredFolders}': getConfiguredFolders,
+    '{workspaceFoldersLineBreak}': getWorkspaceFoldersWithLineBreak,
+    '{sedRemoveGitFromString}': sedRemoveGit,
+    '{sedReplaceSkipDelimiter}': sedSkipDelimiter,
+};
 
 /**
  * Parses the command and replaces the placeholders.
@@ -10,13 +23,10 @@ import * as os from 'os';
  * @returns Final command that will be executed by the terminal.
  */
 export function parseCommand(cmd: Command, cfg: Config): string {
-    let shellCommand = cmd.shellCommand(cfg);
-    shellCommand = shellCommand.replaceAll("{pwd}", getOsPwd());
-    shellCommand = shellCommand.replaceAll("{workspaceFolders}", getWorkspaceFolders());
-    shellCommand = shellCommand.replaceAll("{configuredFolders}", getConfiguredFolders(cfg));
-    shellCommand = shellCommand.replaceAll("{workspaceFoldersLineBreak}", getWorkspaceFoldersWithLineBreak());
-    shellCommand = shellCommand.replaceAll("{sedRemoveGit}", sedRemoveGit());
-    shellCommand = shellCommand.replaceAll("{sedSkipDelimiter}", sedSkipDelimiter());
+    let shellCommand = cmd.shellCommand;
+    Object.entries(handlers).forEach(([key, handler]) => {
+        shellCommand = shellCommand.replace(key, handler(cfg));
+    });
 
     if (cfg.externalTerminal) {
         return `${cfg.externalTerminalCustomCommand.replaceAll("#", `${shellCommand} ${tee()} ${getTempFile(cmd.outputFile, cfg)}`)}`;
@@ -25,6 +35,11 @@ export function parseCommand(cmd: Command, cfg: Config): string {
     return `${shellCommand} ${tee()} ${getTempFile(cmd.outputFile, cfg)}`;
 }
 
+/**
+ * (pwd).path on windows (Powershell syntax)
+ * $(pwd) on linux and macOS.
+ * @returns The PWD command for the current operating system.
+ */
 function getOsPwd(): string {
     switch (os.platform()) {
         case 'win32':

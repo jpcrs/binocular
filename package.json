@@ -14,62 +14,14 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:binocular.findFilesByNameInCurrentWorkspace",
-		"onCommand:binocular.findFilesByNameInAllWorkspaces",
-		"onCommand:binocular.findFilesByNameInConfiguredFolders",
-
-		"onCommand:binocular.findFilesByContentInCurrentWorkspace",
-		"onCommand:binocular.findFilesByContentInAllWorkspaces",
-		"onCommand:binocular.findFilesByContentInConfiguredFolders",
-
-		"onCommand:binocular.addFolderToWorkspaceFromConfiguredFolders",
-		"onCommand:binocular.changeToWorkspaceFromConfiguredFolders",
-
-		"onCommand:binocular.removeFoldersFromWorkspace",
-		"onCommand:binocular.customCommands"
+		"onCommand:binocular.executeCommand"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "binocular.findFilesByNameInCurrentWorkspace",
-				"title": "Binocular: Search for file name (Current working project)"
-			},
-			{
-				"command": "binocular.findFilesByNameInAllWorkspaces",
-				"title": "Binocular: Search for file name (All open projects)"
-			},
-			{
-				"command": "binocular.findFilesByNameInConfiguredFolders",
-				"title": "Binocular: Search for file name (Configured folders)"
-			},
-			{
-				"command": "binocular.findFilesByContentInCurrentWorkspace",
-				"title": "Binocular: Search for file content (Current working project)"
-			},
-			{
-				"command": "binocular.findFilesByContentInAllWorkspaces",
-				"title": "Binocular: Search for file content (All open projects)"
-			},
-			{
-				"command": "binocular.findFilesByContentInConfiguredFolders",
-				"title": "Binocular: Search for file content (Configured folders)"
-			},
-			{
-				"command": "binocular.addFolderToWorkspaceFromConfiguredFolders",
-				"title": "Binocular: Add folder to workspace (Configured folders)"
-			},
-			{
-				"command": "binocular.changeToWorkspaceFromConfiguredFolders",
-				"title": "Binocular: Change to workspace (Configured folders)"
-			},
-			{
-				"command": "binocular.removeFoldersFromWorkspace",
-				"title": "Binocular: Remove folders from workspace"
-			},
-			{
-				"command": "binocular.customCommands",
-				"title": "Binocular: Execute custom commands"
+				"command": "binocular.executeCommand",
+				"title": "Binocular: Execute command"
 			}
 		],
 		"configuration": {
@@ -92,83 +44,71 @@
 					"markdownDescription": "Command that will be used to open the terminal. Only applies when `#binocular.general.useExternalTerminal#` is `checked`. Default values are: **Mac:** `osascript -e 'tell app \"Terminal\" to do script \"ls\" & activate & do script \"#;exit\"`. **Window:** `start cmd /k \"# & exit /s\"`. **Linux:** `x-terminal-emulator -- sh -c \"#\"`. The __#__ is used for placeholder to the command that will be executed.",
 					"type": "string"
 				},
-				"binocular.command.findFilesByNameInCurrentWorkspaceCommand": {
-					"description": "Find files by name (Current workspace)",
-					"markdownDescription": "Command to find files by name in the current working project.",
-					"type": "string",
-					"default": "rg --files --hidden {pwd} | fzf --ansi -m --preview 'bat --color=always {}'"
-				},
-				"binocular.command.findFilesByNameInAllWorkspacesCommand": {
-					"description": "Find files by name (All workspaces)",
-					"markdownDescription": "Command to find files by name in all open projects.",
-					"type": "string",
-					"default": "rg --files --hidden {pwd} {workspaceFolders} | fzf --ansi -m --preview 'bat --color=always {}'"
-				},
-				"binocular.command.findFilesByNameInConfiguredFoldersCommand": {
-					"description": "Find files by name (Configured folders)",
-					"markdownDescription": "Command to find files by name in all configured folders.",
-					"type": "string",
-					"default": "rg --files --hidden {pwd} {configuredFolders} | fzf --ansi -m --preview 'bat --color=always {}'"
-				},
-				"binocular.command.findFilesByContentInCurrentWorkspaceCommand": {
-					"description": "Find files by content (Current workspace)",
-					"markdownDescription": "Command to find files by content in the current working project.",
-					"type": "string",
-					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} | {sedSkipDelimiter} | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
-				},
-				"binocular.command.findFilesByContentInAllWorkspacesCommand": {
-					"description": "Find files by content (All workspaces)",
-					"markdownDescription": "Command to find files by content in all open projects.",
-					"type": "string",
-					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} {workspaceFolders} | {sedSkipDelimiter} | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
-				},
-				"binocular.command.findFilesByContentInConfiguredFoldersCommand": {
-					"description": "Find files by content (Configured folders)",
-					"markdownDescription": "Command to find files by content in all configured folders.",
-					"type": "string",
-					"default": "rg --column --line-number --no-heading --color=always --smart-case . {pwd} {configuredFolders} | {sedSkipDelimiter} | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2}'"
-				},
-				"binocular.command.addFolderToWorkspaceFromConfiguredFoldersCommand": {
-					"description": "Add folder to workspace (Configured folders)",
-					"markdownDescription": "Command to add folder to workspace from configured folders.",
-					"type": "string",
-					"default": "fdfind .git$ -td -H --absolute-path {configuredFolders} | {sedRemoveGit} | fzf -m"
-				},
-				"binocular.command.changeToWorkspaceFromConfiguredFoldersCommand": {
-					"description": "Change to workspace (Configured folders)",
-					"markdownDescription": "Command to change to workspace from configured folders.",
-					"type": "string",
-					"default": "fdfind .git$ -td -H --absolute-path {configuredFolders} | {sedRemoveGit} | fzf"
-				},
-				"binocular.command.removeFoldersFromWorkspaceCommand": {
-					"description": "Remove folders from workspace",
-					"markdownDescription": "Command to remove folders from workspace.",
-					"type": "string",
-					"default": "echo {workspaceFoldersLineBreak} | fzf -m"
-				},
-				"binocular.command.customCommands": {
-					"description": "Custom Commands",
+				"binocular.command.commands": {
+					"description": "Commands",
 					"type": "array",
-					"default": [],
+					"default": [
+						{
+							"shellCommand": "rg --files --hidden --glob '!.git/' {pwd} | fzf -m --ansi --preview 'bat --color=always {}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
+							"commandIdentifier": "Find files by name (Current folder)",
+							"script": "openFile"
+						},
+						{
+							"shellCommand": "rg --files --hidden --glob '!.git/' {workspaceFolders} | fzf -m --ansi --preview 'bat --color=always {}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
+							"commandIdentifier": "Find files by name (All open folders)",
+							"script": "openFile"
+						},
+						{
+							"shellCommand": "rg --files --hidden --glob '!.git/' {configuredFolders} | fzf -m --ansi --preview 'bat --color=always {}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
+							"commandIdentifier": "Find files by name (Configured folders)",
+							"script": "openFile"
+						},
+						{
+							"shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {pwd} | sed 's/:/::/g' | awk -F '::' '{ print $1\"::\"$2\"::\"($2-30 >= 0 ? $2-30 : 0)\"::\"$2+30\"::\"$3\"::\"$4 }' | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
+							"commandIdentifier": "Find files by content (Current folder)",
+							"script": "openFileAndJumpToLine"
+						},
+						{
+							"shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {workspaceFolders} | sed 's/:/::/g' | awk -F '::' '{ print $1\"::\"$2\"::\"($2-30 >= 0 ? $2-30 : 0)\"::\"$2+30\"::\"$3\"::\"$4 }' | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
+							"commandIdentifier": "Find files by content (All open folders)",
+							"script": "openFileAndJumpToLine"
+						},
+						{
+							"shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {configuredFolders} | sed 's/:/::/g' | awk -F '::' '{ print $1\"::\"$2\"::\"($2-30 >= 0 ? $2-30 : 0)\"::\"$2+30\"::\"$3\"::\"$4 }' | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
+							"commandIdentifier": "Find files by content (Configured folders)",
+							"script": "openFileAndJumpToLine"
+						},
+						{
+							"shellCommand": "fd .git$ -td -H --absolute-path {configuredFolders} | {sedRemoveGitFromString} | fzf -m",
+							"commandIdentifier": "Add folder to workspace (Configured folders)",
+							"script": "addFolderToWorkspace"
+						},
+						{
+							"shellCommand": "fd .git$ -td -H --absolute-path {configuredFolders} | {sedRemoveGitFromString} | fzf",
+							"commandIdentifier": "Change to workspace (Configured folders)",
+							"script": "changeToWorkspace"
+						},
+						{
+							"shellCommand": "echo {workspaceFoldersLineBreak} | fzf -m",
+							"commandIdentifier": "Remove folders from workspace",
+							"script": "removeFromWorkspace"
+						}
+					],
 					"items": {
 						"type": "object",
-						"title": "Custom Command Object",
+						"title": "Command Object",
 						"properties": {
+							"shellCOmmand": {
+								"type": "string",
+								"description": "Shell command that will be executed"
+							},
 							"commandIdentifier": {
 								"type": "string",
 								"description": "Name identifier for the command"
 							},
-							"outputFile": {
+							"script": {
 								"type": "string",
-								"description": "File that will be watched for changes"
-							},
-							"command": {
-								"type": "string",
-								"description": "Shell command that will be executed"
-							},
-							"scriptPath": {
-								"type": "string",
-								"description": ".ts file with the code that will be executed"
+								"description": "The script that will be executed when there's new entries in the file"
 							}
 						}
 					}

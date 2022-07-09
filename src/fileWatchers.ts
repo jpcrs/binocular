@@ -11,10 +11,10 @@ import * as os from 'os';
  * @param terminal Terminal object, so we can dispose it after the command is executed.
  */
 export function registerFileWatchers(commands: Command[], cfg: Config, terminal: ITerminal): fs.FSWatcher[] {
-    return commands.map(command => {
+    return commands.filter(x => x.script).map(command => {
         fs.writeFileSync(`${getTempFile(command.outputFile, cfg)}`, '');
         return fs.watch(`${getTempFile(command.outputFile, cfg)}`, (x, y) => fileWatcherWrapper(x, command, cfg, terminal));
-    });
+    }) as fs.FSWatcher[];
 }
 
 /**
@@ -36,7 +36,7 @@ function fileWatcherWrapper(event: fs.WatchEventType, command: Command, config: 
 
 
 export async function executeCustomCommand(data: string, command: Command, terminal: ITerminal) {
-    let scriptContent = fs.readFileSync(command.scriptPath!, {encoding:'utf8', flag:'r'});
+    let scriptContent = fs.readFileSync(command.script!, {encoding:'utf8', flag:'r'});
     const asyncFunction = Object.getPrototypeOf(async function(){}).constructor;
     var func = await new asyncFunction(scriptContent)();
     await func(data, vscode, terminal);

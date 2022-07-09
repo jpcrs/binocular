@@ -1,9 +1,8 @@
-import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs' ;
 import { EXTENSION_NAME } from './constants';
-import { Config } from './types';
+import { Command, Config } from './types';
 
 /**
  * 
@@ -12,15 +11,17 @@ import { Config } from './types';
  * @returns The temporary folder for new files being watched by filewatcher.
  */
 export function getTempFile(fileName: string, cfg: Config): string {
-    return `${os.tmpdir()}${path.sep}${EXTENSION_NAME}${path.sep}${fileName}-${cfg.guid}`;
+    return `${os.tmpdir()}${path.sep}${EXTENSION_NAME}${path.sep}${fileName}`;
 }
 
-export function deleteTempFiles(cfg: Config): string[] {
-    var files = fs.readdirSync(`${os.tmpdir()}${path.sep}${EXTENSION_NAME}`).filter(fn => fn.endsWith(`-${cfg.guid}`));
-    files.forEach(file => {
-        fs.rmSync(`${os.tmpdir()}${path.sep}${EXTENSION_NAME}${path.sep}${file}`);
+export function deleteTempFiles(commands: Command[]) {
+    commands.forEach(command => {
+        const file = `${os.tmpdir()}${path.sep}${EXTENSION_NAME}${path.sep}${command.outputFile}`;
+        if (!fs.existsSync(file)) {
+            return;
+        }
+        fs.rmSync(file);
     });
-    return files;
 }
 
 /**
