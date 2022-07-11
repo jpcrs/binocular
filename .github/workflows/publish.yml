@@ -1,0 +1,101 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - docs
+      - images
+      - .vscode
+      - .github
+      - .gitignore
+      - CHANGELOG.md
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.4.2
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3.3.0
+        with:
+          node-version: 16.x
+
+      - name: Clean Install
+        run: npm ci
+
+      - name: Test
+        run: | 
+          export DISPLAY=:99
+          chromedriver --url-base=/wd/hub &
+          sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & # optional
+          npm test
+        if: runner.os == 'Linux'
+
+      - name: Test
+        run: | 
+          npm test
+        if: runner.os != 'Linux'
+        
+  publish:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.4.2
+      
+      - name: Clean Install
+        run: npm ci
+        
+      - name: compile and create vsix
+        run: npm run package
+
+      - name: set version variable
+        run: |
+          sudo apt-get install -y jq
+          echo "BINOCULAR_VERSION=$(cat package.json | jq -r .version)" >> $GITHUB_ENV
+
+      - name: print version
+        run: |
+          echo "Version: ${{ env.BINOCULAR_VERSION }}"
+      
+      - name: upload vsix as artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: binocular-${{env.BINOCULAR_VERSION}}.vsix
+          path: ${{github.workspace}}/binocular-${{env.BINOCULAR_VERSION}}.vsix
+      
+      - name: publish to marketplace
+        if: github.ref == 'refs/heads/main'
+        env:
+          VSCE_PAT: ${{ secrets.PAT }}
+        run: |
+          npm run deploy ${{ env.VSCE_PAT }}
+
+      - name: create a release
+        if: github.ref == 'refs/heads/main'
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.BINOCULAR_VERSION }}
+          release_name: v${{ env.BINOCULAR_VERSION }}
+          body_path: CHANGELOG.md
+
+      - name: upload artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{github.workspace}}/binocular-${{env.BINOCULAR_VERSION}}.vsix
+          asset_name: binocular-${{env.BINOCULAR_VERSION}}.vsix
+          asset_content_type: application/vsix
