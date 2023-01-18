@@ -6,19 +6,39 @@
 
 This extension has a bunch of dependencies and there's no sanity checks, if the tools listed in the dependencies are not available in your PATH it'll just not work, sorry :(
 
+- [Demo](#Demo)
 - [What's Binocular?](#whats-binocular)
 - [How does it work](#how-does-it-work)
 - [Is this extension really necessary?](#is-this-extension-really-necessary)
 - [Dependencies](#dependencies)
 - [Installation](#installation)
-- [Default Commands](#default-commands)
-    - [Search file by name](#search-by-file-name)
-    - [Search file by content](#search-by-file-content)
-    - [Manage Workspace folders](#manage-workspace-folders)
-- [Creating Shortcuts](#create-shortcuts)
-- [External Terminal](#external-terminal)
 - [Custom Commands](#custom-commands)
+    - [Creating Shortcuts for custom commands](#creating-shortcuts-for-custom-commands)
+- [Default Settings](#default-commands)
+- [Settings](#settings)
 - [Current Problems](#current-problems)
+
+## Demo
+- ## Lazygit
+![Lazygit](./images/CustomCommandsLazyGit.gif)
+
+- ## Search File Local History
+![File Local History](./images/FileHistory.gif)
+
+- ## Search by file name
+![Search for file name](./images/FileByName.gif)
+
+- ## Search by file content
+![Search by file content](./images/FileContent.gif)
+
+- ## Search directory by name (In pre-configured folders)
+![Search directory](./images/DirectoryName.gif)
+
+- ## Search for git projects (In pre-configured folders)
+![Search Git Projects](./images/GitFoldersProject.gif)
+
+- ## Search for LSP Errors
+![LSP Errors](./images/Errors.gif)
 
 ## What's Binocular?
 `Binocular` is an extension to execute shell commands inside vscode. It can be configured to execute any command, as explained in ([Custom Commands](#custom-commands)).
@@ -53,10 +73,6 @@ Currently `binocular-cli` is just available on crates.io, so cargo has to be ins
 2. Install all the other dependencies listed [HERE](#dependencies)
 
 ## Custom Commands
-Binocular invoking lazygit:
-
-![Lazygit](./images/CustomCommandsLazyGit.gif)
-
 You can create custom commands with the `binocular.command.commands` configuration and execute these commands with `binocular.customCommands`.
 
 Some example of custom commands that I use:
@@ -80,7 +96,7 @@ Some example of custom commands that I use:
 ],
 ```
 
-## Creating shortcuts for custom commands
+### Creating shortcuts for custom commands
 Since custom commands are defined in the config file, you have to parameterize the shortcut to send the commandIdentifier as parameter. Example:
 
 keybindings.json:
@@ -95,16 +111,27 @@ keybindings.json:
 
 ## Default Commands
 `binocular.searchFile`: Search by file name
+
 `binocular.searchFileContent`: Search by file content
+
 `binocular.searchDirectory`: Search by directory name
+
 `binocular.searchFileConfiguredFolders`: Search by file name in configured folders
+
 `binocular.searchContentConfiguredFolders`: Search by file content in configured folders
+
 `binocular.searchDirectoryConfiguredFolders`: Search by directory name in configured folders
+
 `binocular.searchFileHistory`: Search file history
+
 `binocular.searchGitFoldersConfiguredFolders`: Search git folders in configured folders
+
 `binocular.searchErrors`: View errors
+
 `binocular.searchWarnings`: View warnings
+
 `binocular.searchHints`: View Hints
+
 `binocular.customCommands`: Execute Custom Commands
 
 
@@ -124,25 +151,6 @@ Custom commands, [Example](#custom-commands).
 
 - `binocular.general.keepTerminalPanelOpenAfterExecution`
 If you want to keep the terminal open after the execution or not. Unfortunately the VSCode api doesn't expose if the bottom pane is open or not, so by default it's always closed.
-
-## Demo
-- ## Search File Local History
-![File Local History](./images/FileHistory.gif)
-
-- ## Search by file name
-![Search for file name](./images/FileByName.gif)
-
-- ## Search by file content
-![Search by file content](./images/FileContent.gif)
-
-- ## Search directory by name (In pre-configured folders)
-![Search directory](./images/DirectoryName.gif)
-
-- ## Search for git projects (In pre-configured folders)
-![Search Git Projects](./images/GitFoldersProject.gif)
-
-- ## Search for LSP Errors
-![LSP Errors](./images/Errors.gif)
 
 ## Current Problems
 - Tests :)
