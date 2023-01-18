@@ -6,3 +6,5 @@ node_modules
 .vscode/configurationCache.log
 .vscode/dryrun.log
 .vscode/targets.log
+
+.DS_Store

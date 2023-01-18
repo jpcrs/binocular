@@ -4,9 +4,13 @@
 
 > Not as useful as a telescope, but helps in some situations.
 
+This extension has a bunch of dependencies and there's no sanity checks, if the tools listed in the dependencies are not available in your PATH it'll just not work, sorry :(
+
 - [What's Binocular?](#whats-binocular)
 - [How does it work](#how-does-it-work)
+- [Is this extension really necessary?](#is-this-extension-really-necessary)
 - [Dependencies](#dependencies)
+- [Installation](#installation)
 - [Default Commands](#default-commands)
     - [Search file by name](#search-by-file-name)
     - [Search file by content](#search-by-file-content)
@@ -17,220 +21,131 @@
 - [Current Problems](#current-problems)
 
 ## What's Binocular?
-`Binocular` is an extension to improve the file navigation and workspace management in VSCode. Inspired by [Telescope](https://github.com/nvim-telescope/telescope.nvim).
+`Binocular` is an extension to execute shell commands inside vscode. It can be configured to execute any command, as explained in ([Custom Commands](#custom-commands)).
+My main usage is to use it together with [Binocular-cli](https://github.com/jpcrs/binocular-cli) (The default commands in this extension), which is an opinionated wrapper around rg/fzf/fd/delta, mainly to search files and folders.
+
+Inspired by [Telescope](https://github.com/nvim-telescope/telescope.nvim). But implemented with the quality of Internet Explorer 6.
 
 Important: The code isn't tested or extensible enough to make this a serious extension. I just created this to help my current workflow whenever I have to use vscode. There's no guarantee to work for other people :).
+
+## Is this extension really necessary?
+Not really, everything that it does can be easily achieved with vscode [Tasks](https://code.visualstudio.com/docs/editor/tasks). But I wanted to do it so I can declutter my Tasks file, also the Tasks commands had to be different depending the OS that I'm using in the moment.
 
 ### Motivation?
 My RSI.
 
 ## How does it work?
-Binocular register **commands** and **file-watchers** during startup, a command contains a **shell instruction** to be executed in a terminal and a **file** to receive the output. The **file-watchers** listen to those files and interacts with the vscode api whenever there's new input in the files.
-
-![asciiflow](./images/asciiflow.png)
+It's a simple wrapper around vscode **Tasks**. It runs a task with some specific command, send the task terminal to the editor and then close at the end of the execution.
 
 ## Dependencies
-All default commands can be configured/modified, so there's no hard dependencies to run the plugin, but the default shell commands configuration have a set of dependencies, they're:
+There are a bunch of hard dependencies to use the default commands:
+- [binocular-cli](https://github.com/jpcrs/binocular-cli) (Wrapper around the other tools so it makes easier to compose the commands)
 - [ripgrep](https://github.com/BurntSushi/ripgrep)
 - [fzf v0.30.0](https://github.com/junegunn/fzf)
 - [fd](https://github.com/sharkdp/fd) (**Important**: On Debian distros fd binary is actually called `fdfind`, but the default config uses `fd`. Create a Symbolic link `fd` or change the settings to `fdfind`).
 - [bat](https://github.com/sharkdp/bat)
-- [sed](https://www.gnu.org/software/sed/) / ([sed for windows](http://gnuwin32.sourceforge.net/packages/sed.htm#:~:text=Sed%20(streams%20editor)%20isn',and%20outputs%20the%20modified%20text.))
-- [awk](https://www.gnu.org/software/gawk/) / ([awk for windows](http://gnuwin32.sourceforge.net/packages/gawk.htm))
+- [delta](https://github.com/dandavison/delta) (Used in the File History diff only)
 
+## Installation
+Currently `binocular-cli` is just available on crates.io, so cargo has to be installed. More information: https://doc.rust-lang.org/cargo/getting-started/installation.html
 
-## Default Commands
-
-- ## Search by file name
-![Search for file name](./images/OpenFilesByName.gif)
-
-- ## Search by file content
-![Search by file content](./images/OpenFilesByContent.gif)
-
-- ## Manage workspace folders
-![Add or remove folder from workspace](./images/ManageWorkspace.gif)
-
-Binocular comes with a set of pre-configured commands, but they can be updated if you want, for example, switch from [fzf](https://github.com/junegunn/fzf) to [sk](https://github.com/lotabout/skim), or [rg](https://github.com/BurntSushi/ripgrep) to [ag](https://github.com/ggreer/the_silver_searcher)
-
-The default commands can be updated in the settings.json file, the default values are:
-``` json
-[
-    {
-        "shellCommand": "rg --files --hidden --glob '!.git/' {pwd} | fzf -m --ansi --preview 'bat --color=always {}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
-        "commandIdentifier": "Find files by name (Current folder)",
-        "script": "openFile"
-    },
-    {
-        "shellCommand": "rg --files --hidden --glob '!.git/' {workspaceFolders} | fzf -m --ansi --preview 'bat --color=always {}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
-        "commandIdentifier": "Find files by name (All open folders)",
-        "script": "openFile"
-    },
-    {
-        "shellCommand": "rg --files --hidden --glob '!.git/' {configuredFolders} | fzf -m --ansi --preview 'bat --color=always {}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
-        "commandIdentifier": "Find files by name (Configured folders)",
-        "script": "openFile"
-    },
-    {
-        "shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {pwd} | sed 's/:/::/g' | awk -F '::' '{ print $1\"::\"$2\"::\"($2-30 >= 0 ? $2-30 : 0)\"::\"$2+30\"::\"$3\"::\"$4 }' | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
-        "commandIdentifier": "Find files by content (Current folder)",
-        "script": "openFileAndJumpToLine"
-    },
-    {
-        "shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {workspaceFolders} | sed 's/:/::/g' | awk -F '::' '{ print $1\"::\"$2\"::\"($2-30 >= 0 ? $2-30 : 0)\"::\"$2+30\"::\"$3\"::\"$4 }' | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
-        "commandIdentifier": "Find files by content (All open folders)",
-        "script": "openFileAndJumpToLine"
-    },
-    {
-        "shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {configuredFolders} | sed 's/:/::/g' | awk -F '::' '{ print $1\"::\"$2\"::\"($2-30 >= 0 ? $2-30 : 0)\"::\"$2+30\"::\"$3\"::\"$4 }' | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
-        "commandIdentifier": "Find files by content (Configured folders)",
-        "script": "openFileAndJumpToLine"
-    },
-    {
-        "shellCommand": "fd .git$ -td -H --absolute-path {configuredFolders} | {sedRemoveGitFromString} | fzf -m",
-        "commandIdentifier": "Add git project to workspace (Configured folders)",
-        "script": "addFolderToWorkspace"
-    },
-    {
-        "shellCommand": "fd .git$ -td -H --absolute-path {configuredFolders} | {sedRemoveGitFromString} | fzf",
-        "commandIdentifier": "Change another git project (Configured folders)",
-        "script": "changeToWorkspace"
-    },
-    {
-        "shellCommand": "echo {workspaceFoldersLineBreak} | fzf -m",
-        "commandIdentifier": "Remove folders from workspace",
-        "script": "removeFromWorkspace"
-    }
-]
-```
-
-Binocular exposes some placeholder methods that can be used in the configuration. Currently they're:
-- `{pwd}`: Gets the current folder depending on the OS currently in use. On `Windows` it'll use `%cd%`, on all other platforms `$(pwd)`.
-- `{workspaceFolders}`: All the workspace folders currently open in vscode, separated by whitespace.
-- `{configuredFolders}`: All the folders in the `binocular.general.additionalSearchLocations` configuration, separated by whitespace.
-- `{workspaceFoldersLineBreak}`: All the folders currently open in vscode, separated by linebreak (Currently used for input in fzf).
-- `{sedRemoveGitFromString}`: sed command to `.git` from the string, we use this to pipe our `fd` into `fzf` after searching for git projects.
-- `{sedReplaceSkipDelimiter}`: sed command to update `rg` delimiters from `:` to `::`. On windows it skips the first occurance (`C:/..`).
-
-Currently the default methods/scripts that can be used are:
-- `openFile`: Receives a full file path and opens the file on vscode.
-- `openFileAndJumpToLine`: Receives `{fullfilepath}::{line to jump to}`, opens the file and jump to the line.
-- `addFolderToWorkspace`: Adds the folder to the workspace
-- `changeToWorkspace`: Change to the workspaces (Will reload all the vscode host)
-- `removeFromWorkspace`: Removes the folder from workspace
-
-## External Terminal
-VSCode integrated terminal has some rendering performance problem, it uses a lot of resources when there's too much information being re-rendered quickly. It's possible to force the execution of the shell commands in an external shell.
-
-By default, the command to invoke an external terminal is based on the Operating System in use.
-
-- **Linux**: `x-terminal-emulator -- sh -c "#"`
-- **macOS**: `osascript -e 'tell app "Terminal" to do script "ls" & activate & do script "#;exit"`
-- **Windows**: `start cmd /k "# & exit /s"`
-
-The command can be overwriten using the `binocular.command.externalTerminalCustomCommand` config. An `#` is used as placeholder to choose where the actual shell command will be replaced.
-
-
-![External Terminal](./images/ExternalTerminal.gif)
-
-## Create shortcuts
-The only command that the library register is `binocular.executeCommand`. Since we have to choose which command we actully want to execute, we have to send the `commandIdentifier` as an arg to it. You have to set it manually in the `keybindings.json` file (`Preferences: Open Keyboard Shortcut (JSON)`).
-
-Example of shortcut to find files by name:
-```
-    {
-        "key": "alt+f",
-        "command": "binocular.executeCommand",
-        "args": "Find files by name (Current folder)"
-    },
-```
+1. `cargo install binocular-cli`
+2. Install all the other dependencies listed [HERE](#dependencies)
 
 ## Custom Commands
-First: Yup, this has to be improved.
+Binocular invoking lazygit:
 
-It's possible to create your own commands in the `binocular.command.commands` configuration.
+![Lazygit](./images/CustomCommandsLazyGit.gif)
 
-The `script` can be any pre-defined method or point to any .ts file that has the following signature: `async function customFunction(data, vscode, terminal)`.
+You can create custom commands with the `binocular.command.commands` configuration and execute these commands with `binocular.customCommands`.
 
-- #### Example:
-<details>
-<summary>This is an extension that fetches the git log and let's you checkout the git hash.</summary>
-<br>
-
-`settings.json` file:
+Some example of custom commands that I use:
 ```
-"binocular.command.customCommands": [
+"binocular.command.commands": [
+    //lazygit! :)
     {
-        "shellCommand": "git-fuzzy-log", // Command that will be executed on shell, in this case, it's a bash script in my PATH.
-        "commandIdentifier": "Git Fuzzy Log", // Command identifier, it'll be shown in the list in case the `customCommands` command is invoked without any parameter.
-        "script": "/home/user/bin/git-fuzzy-log.ts" // Typescript file with a method signature that will be invoked.
+        "shellCommand": "lazygit",
+        "commandIdentifier": "Lazygit"
+    },
+    // Search git log using the `git fuzzy` tool and checkout the selected one
+    {
+        "shellCommand": "git checkout $(git fuzzy log)",
+        "commandIdentifier": "Git fuzzy log"
+    },
+    // Search git log for the current file using the `git fuzzy` tool and checkout the selected one
+    {
+        "shellCommand": "git checkout $(git fuzzy log ${file})",
+        "commandIdentifier": "Git fuzzy log current file"
     }
-]
+],
 ```
 
-- `keybindings.json` file:
+## Creating shortcuts for custom commands
+Since custom commands are defined in the config file, you have to parameterize the shortcut to send the commandIdentifier as parameter. Example:
+
+keybindings.json:
 ```
-{
-    "key": "alt+l",
-    "command": "binocular.executeCommand",
-    "args": "Git Fuzzy Log"
-}
-```
-
-- `git-fuzzy-log` file:
-```shell
-GIT_FZF_DEFAULT_OPTS="
-	$FZF_DEFAULT_OPTS
-	--ansi
-	--bind shift-down:preview-down
-	--bind shift-up:preview-up
-	--bind pgdn:preview-page-down
-	--bind pgup:preview-page-up
-	--bind q:abort
-	$GIT_FZF_DEFAULT_OPTS
-"
-
-PREVIEW_COMMAND='f() {
-  set -- $(echo -- "$@" | grep -o "[a-f0-9]\{7\}")
-  [ $# -eq 0 ] || (
-    git show --no-patch --color=always $1
-    echo
-    git show --stat --format="" --color=always $1 |
-    while read line; do
-      tput dim
-      echo " $line" | sed "s/\x1B\[m/\x1B\[2m/g"
-      tput sgr0
-    done |
-    tac | sed "1 a \ " | tac
-  )
-}; f {}'
-
-git log --graph --color=always --format="%C(auto)%h %s%d " | \
-  fzf ${GIT_FZF_DEFAULT_OPTS} --no-sort --tiebreak=index \
-  --preview "${PREVIEW_COMMAND}" --preview-window=right:70 | \
-  grep -o "[a-f0-9]\{7\}"
+    //Execute Lazygit command defined in binocular.command.commands settings.
+    {
+        "key": "alt+g",
+        "command": "binocular.executeCommand",
+        "args": "Lazygit"
+    },
 ```
 
-- `/home/user/bin/git-fuzzy-log.ts` file:
-```typescript
-async function customFunction(data, vscode, terminal) {
-    data = data.split('\n')[0].trim();
-    const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports;
-    const api = gitExtension.getAPI(1);
+## Default Commands
+`binocular.searchFile`: Search by file name
+`binocular.searchFileContent`: Search by file content
+`binocular.searchDirectory`: Search by directory name
+`binocular.searchFileConfiguredFolders`: Search by file name in configured folders
+`binocular.searchContentConfiguredFolders`: Search by file content in configured folders
+`binocular.searchDirectoryConfiguredFolders`: Search by directory name in configured folders
+`binocular.searchFileHistory`: Search file history
+`binocular.searchGitFoldersConfiguredFolders`: Search git folders in configured folders
+`binocular.searchErrors`: View errors
+`binocular.searchWarnings`: View warnings
+`binocular.searchHints`: View Hints
+`binocular.customCommands`: Execute Custom Commands
 
-    const repo = api.repositories[0];
-    repo.checkout(data);
-    terminal.dispose();
-}
-return await customFunction;
+
+## Settings
+- `binocular.general.additionalSearchLocations`
+Which folders are going to be used in the commands that uses "configured folders".
+Example:
 ```
+    "binocular.general.additionalSearchLocations": [
+        
+        "~/Projects",
+        "~/.config"
+    ]
+```
+- `binocular.command.commands`
+Custom commands, [Example](#custom-commands).
 
-Result when using the `alt+l` shortcut:
+- `binocular.general.keepTerminalPanelOpenAfterExecution`
+If you want to keep the terminal open after the execution or not. Unfortunately the VSCode api doesn't expose if the bottom pane is open or not, so by default it's always closed.
 
-![Custom Commands](./images/CustomCommand.gif)
-</details>
+## Demo
+- ## Search File Local History
+![File Local History](./images/FileHistory.gif)
+
+- ## Search by file name
+![Search for file name](./images/FileByName.gif)
+
+- ## Search by file content
+![Search by file content](./images/FileContent.gif)
+
+- ## Search directory by name (In pre-configured folders)
+![Search directory](./images/DirectoryName.gif)
+
+- ## Search for git projects (In pre-configured folders)
+![Search Git Projects](./images/GitFoldersProject.gif)
+
+- ## Search for LSP Errors
+![LSP Errors](./images/Errors.gif)
 
 ## Current Problems
 - Tests :)
-- Apparently Powershell startup is really slow.
-- Dirty approach to change the delimiter to `::` so it makes my life easier hardcoding `const fileInfo = file.split('::');`.
-- Terrible way of invoking custom scripts, but lazy to change.
+- I don't really get how vscode timeline works, it's not exposed through their API, I don't want to save the whole history myself, so the History command is really unreliable.
+- A lot of dependencies
+- Everything else

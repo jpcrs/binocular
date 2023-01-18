@@ -6,9 +6,9 @@
 	"repository": {
 		"url": "https://github.com/jpcrs/Binocular"
 	},
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"engines": {
-		"vscode": "^1.68.0"
+		"vscode": "^1.73.0"
 	},
 	"keywords": [
 		"binocular",
@@ -21,134 +21,122 @@
 	"categories": [
 		"Other"
 	],
-	"activationEvents": [
-		"onCommand:binocular.executeCommand"
-	],
-	"main": "./out/extension.js",
-	"contributes": {
-		"commands": [
-			{
-				"command": "binocular.executeCommand",
-				"title": "Binocular: Execute command"
-			}
-		],
-		"configuration": {
-			"title": "Binocular",
-			"properties": {
-				"binocular.general.additionalSearchLocations": {
-					"description": "Additional search locations",
-					"markdownDescription": "Search for files in these locations",
-					"type": "array",
-					"default": []
-				},
-				"binocular.general.useExternalTerminal": {
-					"description": "Use external terminal",
-					"markdownDescription": "Open in external terminal",
-					"type": "boolean",
-					"default": false
-				},
-				"binocular.command.externalTerminalCustomCommand": {
-					"description": "External terminal custom command",
-					"markdownDescription": "Command that will be used to open the terminal. Only applies when `#binocular.general.useExternalTerminal#` is `checked`. Default values are: **Mac:** `osascript -e 'tell app \"Terminal\" to do script \"ls\" & activate & do script \"#;exit\"`. **Window:** `start cmd /k \"# & exit /s\"`. **Linux:** `x-terminal-emulator -- sh -c \"#\"`. The __#__ is used for placeholder to the command that will be executed.",
-					"type": "string"
-				},
-				"binocular.command.commands": {
-					"description": "Commands",
-					"type": "array",
-					"default": [
-						{
-							"shellCommand": "rg --files --hidden --glob '!.git/' {pwd} | fzf -m --ansi --preview 'bat --color=always {}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
-							"commandIdentifier": "Find files by name (Current folder)",
-							"script": "openFile"
-						},
-						{
-							"shellCommand": "rg --files --hidden --glob '!.git/' {workspaceFolders} | fzf -m --ansi --preview 'bat --color=always {}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
-							"commandIdentifier": "Find files by name (All open folders)",
-							"script": "openFile"
-						},
-						{
-							"shellCommand": "rg --files --hidden --glob '!.git/' {configuredFolders} | fzf -m --ansi --preview 'bat --color=always {}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
-							"commandIdentifier": "Find files by name (Configured folders)",
-							"script": "openFile"
-						},
-						{
-							"shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {pwd} | {sedReplaceDelimiter} | {awkInsertLineRange} | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
-							"commandIdentifier": "Find files by content (Current folder)",
-							"script": "openFileAndJumpToLine"
-						},
-						{
-							"shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {workspaceFolders} | {sedReplaceDelimiter} | {awkInsertLineRange} | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
-							"commandIdentifier": "Find files by content (All open folders)",
-							"script": "openFileAndJumpToLine"
-						},
-						{
-							"shellCommand": "rg --column --line-number --no-heading --color=never --smart-case . {configuredFolders} | {sedReplaceDelimiter} | {awkInsertLineRange} | fzf -m --delimiter :: --ansi --preview 'bat --color=always {1} --highlight-line {2} --line-range {3}:{4}' --bind shift-up:preview-page-up,shift-down:preview-page-down",
-							"commandIdentifier": "Find files by content (Configured folders)",
-							"script": "openFileAndJumpToLine"
-						},
-						{
-							"shellCommand": "fd .git$ -td -H --absolute-path {configuredFolders} | {sedRemoveGitFromString} | fzf -m",
-							"commandIdentifier": "Add folder to workspace (Configured folders)",
-							"script": "addFolderToWorkspace"
-						},
-						{
-							"shellCommand": "fd .git$ -td -H --absolute-path {configuredFolders} | {sedRemoveGitFromString} | fzf",
-							"commandIdentifier": "Change to workspace (Configured folders)",
-							"script": "changeToWorkspace"
-						},
-						{
-							"shellCommand": "echo {workspaceFoldersLineBreak} | fzf -m",
-							"commandIdentifier": "Remove folders from workspace",
-							"script": "removeFromWorkspace"
-						}
-					],
-					"items": {
-						"type": "object",
-						"title": "Command Object",
-						"properties": {
-							"shellCOmmand": {
-								"type": "string",
-								"description": "Shell command that will be executed"
-							},
-							"commandIdentifier": {
-								"type": "string",
-								"description": "Name identifier for the command"
-							},
-							"script": {
-								"type": "string",
-								"description": "The script that will be executed when there's new entries in the file"
-							}
-						}
-					}
-				}
-			}
-		}
-	},
-	"extensionDependencies": [
-		"vscode.git"
-	],
-	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
-		"pretest": "npm run compile && npm run lint",
-		"lint": "eslint src --ext ts",
-		"test": "node ./out/test/runTest.js",
-		"package": "vsce package",
-		"deploy": "vsce publish -p"
-	},
-	"devDependencies": {
-		"@types/vscode": "^1.68.0",
-		"@types/glob": "^7.2.0",
-		"@types/mocha": "^9.1.1",
-		"@types/node": "16.x",
-		"@typescript-eslint/eslint-plugin": "^5.27.0",
-		"@typescript-eslint/parser": "^5.27.0",
-		"eslint": "^8.16.0",
-		"glob": "^8.0.3",
-		"mocha": "^10.0.0",
-		"typescript": "^4.7.2",
-		"vsce": "^2.9.2",
-		"@vscode/test-electron": "^2.1.3"
-	}
+  "activationEvents": [
+    "onCommand:binocular.searchFile",
+    "onCommand:binocular.searchFileContent",
+    "onCommand:binocular.searchDirectory",
+    "onCommand:binocular.searchFileConfiguredFolders",
+    "onCommand:binocular.searchContentConfiguredFolders",
+    "onCommand:binocular.searchDirectoryConfiguredFolders",
+    "onCommand:binocular.searchGitFoldersConfiguredFolders",
+    "onCommand:binocular.searchFileHistory",
+    "onCommand:binocular.searchErrors",
+    "onCommand:binocular.searchWarnings",
+    "onCommand:binocular.searchHints"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "binocular.searchFile",
+        "title": "Binocular: Search by file name"
+      },
+      {
+        "command": "binocular.searchFileContent",
+        "title": "Binocular: Search by file content"
+      },
+      {
+        "command": "binocular.searchDirectory",
+        "title": "Binocular: Search by directory name"
+      },
+      {
+        "command": "binocular.searchFileConfiguredFolders",
+        "title": "Binocular: Search by file name in configured folders"
+      },
+      {
+        "command": "binocular.searchContentConfiguredFolders",
+        "title": "Binocular: Search by file content in configured folders"
+      },
+      {
+        "command": "binocular.searchDirectoryConfiguredFolders",
+        "title": "Binocular: Search by directory name in configured folders"
+      },
+      {
+        "command": "binocular.searchFileHistory",
+        "title": "Binocular: Search file history"
+      },
+      {
+        "command": "binocular.searchGitFoldersConfiguredFolders",
+        "title": "Binocular: Search git folders in configured folders"
+      },
+      {
+        "command": "binocular.searchErrors",
+        "title": "Binocular: View errors"
+      },
+      {
+        "command": "binocular.searchWarnings",
+        "title": "Binocular: View warnings"
+      },
+      {
+        "command": "binocular.searchHints",
+        "title": "Binocular: View Hints"
+      },
+      {
+        "command": "binocular.customCommands",
+        "title": "Binocular: Execute Custom Commands"
+      }
+    ],
+    "configuration": {
+      "title": "Binocular",
+      "properties": {
+        "binocular.general.keepTerminalPanelOpenAfterExecution": {
+          "description": "Keep the terminal pane open after the command is executed",
+          "markdownDescription": "Keep the terminal pane open after the command is executed",
+          "type": "boolean",
+          "default": false
+        },
+        "binocular.general.additionalSearchLocations": {
+          "description": "Additional search locations",
+          "markdownDescription": "Search for files in these locations",
+          "type": "array",
+          "default": []
+        },
+        "binocular.command.commands": {
+          "description": "Commands",
+          "type": "array",
+          "default": [
+            {
+              "shellCommand": "git checkout $(git fuzzy log)",
+              "commandIdentifier": "Git fuzzy log"
+            },
+            {
+              "shellCommand": "git checkout $(git fuzzy log ${file})",
+              "commandIdentifier": "Git fuzzy log current file"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.73.0",
+    "@types/glob": "^8.0.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.1.0",
+    "typescript": "^4.9.3",
+    "@vscode/test-electron": "^2.2.0"
+  }
 }
