@@ -67,7 +67,7 @@ function init(context: vscode.ExtensionContext, cfg: UserConfig) {
 		})
 	);
 	context.subscriptions.push(
-		vscode.commands.registerCommand('binocular.searchFileContentConfiguredFolders', async () => {
+		vscode.commands.registerCommand('binocular.searchContentConfiguredFolders', async () => {
 			vscode.tasks.executeTask(binocularTasks.searchFileContentConfiguredFolders());
 		})
 	);
