@@ -3,6 +3,10 @@
 ## [Unreleased]
 - Initial release
 
+## [0.0.4] - 2023-02-18 - [VSIX]()
+### Fix
+- Fix the search file content handler name
+
 ## [0.0.3] - 2023-02-18 - [VSIX]()
 ### Added
 - Icon!!!!!
