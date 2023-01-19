@@ -3,17 +3,20 @@
 	"displayName": "Binocular",
 	"publisher": "jpcrs",
 	"description": "Not exactly a telescope, but it's useful sometimes. Extension to search/navigate through files and workspaces.",
+  "icon": "images/binocular.png",
 	"repository": {
 		"url": "https://github.com/jpcrs/Binocular"
 	},
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"engines": {
 		"vscode": "^1.73.0"
 	},
 	"keywords": [
 		"binocular",
+    "telescope",
 		"fzf",
 		"ripgrep",
+		"grep",
 		"fuzzy finder",
 		"search",
 		"workspace"

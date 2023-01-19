@@ -3,7 +3,11 @@
 ## [Unreleased]
 - Initial release
 
-## [0.0.2] - 2023-18-01 - [VSIX]()
+## [0.0.3] - 2023-02-18 - [VSIX]()
+### Added
+- Icon!!!!!
+
+## [0.0.2] - 2023-01-18 - [VSIX]()
 ### Added
 - New dependencies, yay. :(
 - Now all the default commands are going through [binocular-cli](https://github.com/jpcrs/binocular-cli). This creates a new dependency to yet another tool, but should make things more reliable in other systems (Not having to rely sed magic, yay, sanity back)
