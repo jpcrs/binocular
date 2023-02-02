@@ -1,13 +1,17 @@
 # Change Log
 
 ## [Unreleased]
-- Initial release
+- 
 
-## [0.0.4] - 2023-02-18 - [VSIX]()
+## [0.0.5] - 2023-02-02 - [VSIX]()
 ### Fix
-- Fix the search file content handler name
+- Fix binocular binary name
 
-## [0.0.3] - 2023-02-18 - [VSIX]()
+## [0.0.4] - 2023-01-18 - [VSIX]()
+### Fix
+- Remove unnecessary code
+
+## [0.0.3] - 2023-01-18 - [VSIX]()
 ### Added
 - Icon!!!!!
 
