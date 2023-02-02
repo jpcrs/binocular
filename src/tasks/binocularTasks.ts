@@ -14,29 +14,29 @@ export class BinocularTasks {
     }
 
     public searchFile = (): vscode.Task =>
-        this.initBinocularTask(`binocular-rust ${this.opt} -f ${vscode.workspace.workspaceFolders?.map(x => `-p ${x.uri.fsPath}`).join(" ") ?? ""}`);
+        this.initBinocularTask(`binocular-cli ${this.opt} -f ${vscode.workspace.workspaceFolders?.map(x => `-p ${x.uri.fsPath}`).join(" ") ?? ""}`);
 
     public searchFileContent = (): vscode.Task =>
-        this.initBinocularTask(`binocular-rust ${this.opt} ${vscode.workspace.workspaceFolders?.map(x => `-p ${x.uri.fsPath}`).join(" ") ?? ""}`);
+        this.initBinocularTask(`binocular-cli ${this.opt} ${vscode.workspace.workspaceFolders?.map(x => `-p ${x.uri.fsPath}`).join(" ") ?? ""}`);
 
     public searchDirectory = (): vscode.Task =>
-        this.initBinocularTask(`binocular-rust ${this.opt} -d ${vscode.workspace.workspaceFolders?.map(x => `-p ${x.uri.fsPath}`).join(" ") ?? ""}`);
+        this.initBinocularTask(`binocular-cli ${this.opt} -d ${vscode.workspace.workspaceFolders?.map(x => `-p ${x.uri.fsPath}`).join(" ") ?? ""}`);
 
     public searchFileConfiguredFolders = (): vscode.Task =>
-        this.initBinocularTask(`binocular-rust ${this.opt} -f ${this.additionalFolders}`);
+        this.initBinocularTask(`binocular-cli ${this.opt} -f ${this.additionalFolders}`);
 
     public searchFileContentConfiguredFolders = (): vscode.Task =>
-        this.initBinocularTask(`binocular-rust ${this.opt} ${this.additionalFolders}`);
+        this.initBinocularTask(`binocular-cli ${this.opt} ${this.additionalFolders}`);
 
     public searchDirectoryConfiguredFolders = (): vscode.Task =>
-        this.initBinocularTask(`binocular-rust ${this.opt} -d ${this.additionalFolders}`);
+        this.initBinocularTask(`binocular-cli ${this.opt} -d ${this.additionalFolders}`);
 
     public git(userConfig: UserConfig): vscode.Task {
         let folderLocation = getFileHistoryPath();
         let activeTextEditor = vscode.window.activeTextEditor?.document.uri.fsPath!;
         const config = vscode.workspace.getConfiguration();
         const historyPath = config.get('history.location');
-        return this.initBinocularTask(`binocular-rust ${this.opt} --git ${this.additionalFolders}`);
+        return this.initBinocularTask(`binocular-cli ${this.opt} --git ${this.additionalFolders}`);
     }
 
     public history(): vscode.Task {
@@ -45,7 +45,7 @@ export class BinocularTasks {
         const config = vscode.workspace.getConfiguration();
         const historyPath = config.get('history.location');
         console.log(historyPath);
-        return this.initBinocularTask(`binocular-rust ${this.opt} history -p '${folderLocation}' -f '${activeTextEditor}'`);
+        return this.initBinocularTask(`binocular-cli ${this.opt} history -p '${folderLocation}' -f '${activeTextEditor}'`);
     }
 
     public diagnostic(severity: vscode.DiagnosticSeverity): vscode.Task {
@@ -60,7 +60,7 @@ export class BinocularTasks {
             }
 		}
 		let file = writeFile("diagnostics", fileContent);
-        return this.initBinocularTask(`binocular-rust ${this.opt} read-file -f ${file}`);
+        return this.initBinocularTask(`binocular-cli ${this.opt} read-file -f ${file}`);
     }
 
     public breakpoints(): vscode.Task {
@@ -76,7 +76,7 @@ export class BinocularTasks {
 		}
 		let file = writeFile("breakpoints", fileContent);
 
-        return this.initBinocularTask(`binocular-rust -c read-file -f ${file}`);
+        return this.initBinocularTask(`binocular-cli -c read-file -f ${file}`);
     }
 
     private initBinocularTask(command: string): vscode.Task {
