@@ -104,7 +104,7 @@ keybindings.json:
     //Execute Lazygit command defined in binocular.command.commands settings.
     {
         "key": "alt+g",
-        "command": "binocular.executeCommand",
+        "command": "binocular.customCommands",
         "args": "Lazygit"
     },
 ```
