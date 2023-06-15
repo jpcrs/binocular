@@ -86,14 +86,15 @@ export class BinocularTasks {
             'binocular',
             'binocular',
             new vscode.ShellExecution(`${command}`),
-            '$binocular'
+            '$binocular',
         )
         task.presentationOptions = {
             reveal: vscode.TaskRevealKind.Always,
             focus: true,
             panel: vscode.TaskPanelKind.Dedicated,
             showReuseMessage: false,
-            clear: true
+            clear: true,
+            close: true
         }
         task.isBackground = true;
         return task;

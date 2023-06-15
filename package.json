@@ -7,9 +7,9 @@
 	"repository": {
 		"url": "https://github.com/jpcrs/Binocular"
 	},
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"engines": {
-		"vscode": "^1.73.0"
+		"vscode": "^1.79.0"
 	},
 	"keywords": [
 		"binocular",
@@ -24,19 +24,6 @@
 	"categories": [
 		"Other"
 	],
-  "activationEvents": [
-    "onCommand:binocular.searchFile",
-    "onCommand:binocular.searchFileContent",
-    "onCommand:binocular.searchDirectory",
-    "onCommand:binocular.searchFileConfiguredFolders",
-    "onCommand:binocular.searchContentConfiguredFolders",
-    "onCommand:binocular.searchDirectoryConfiguredFolders",
-    "onCommand:binocular.searchGitFoldersConfiguredFolders",
-    "onCommand:binocular.searchFileHistory",
-    "onCommand:binocular.searchErrors",
-    "onCommand:binocular.searchWarnings",
-    "onCommand:binocular.searchHints"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -132,7 +119,7 @@
 		"deploy": "vsce publish -p"
   },
   "devDependencies": {
-    "@types/vscode": "^1.73.0",
+    "@types/vscode": "^1.79.0",
     "@types/glob": "^8.0.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
