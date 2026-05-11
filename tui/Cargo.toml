@@ -1,7 +1,13 @@
 [package]
-name = "binocular"
+name = "binocular-cli"
 version = "0.2.0"
 edition = "2021"
+description = "Not exactly a telescope, but it's useful sometimes. TUI to search/navigate through files and workspaces."
+license = "MIT"
+
+[[bin]]
+name = "binocular"
+path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.102"
