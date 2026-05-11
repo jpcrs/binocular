@@ -7,7 +7,7 @@
 <p align="center">
   <a href="#installation"><img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue" alt="Platform"></a>
   <a href="https://github.com/jpcrs/Binocular/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
-  <a href="https://github.com/jpcrs/Binocular/actions"><img src="https://img.shields.io/github/actions/workflow/status/jpcrs/Binocular/ci.yml?label=build" alt="Build"></a>
+  <a href="https://github.com/jpcrs/Binocular/actions"><img src="https://img.shields.io/github/actions/workflow/status/jpcrs/Binocular/release-tui.yml?label=build" alt="Build"></a>
 </p>
 
 > If you're looking for the vscode integration, check out [`vscode/README.md`](vscode/README.md).
