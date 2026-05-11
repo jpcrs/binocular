@@ -26,7 +26,7 @@
 
 #### Cargo
 ```bash
-cargo install binocular
+cargo install binocular-cli
 ```
 
 #### From source
