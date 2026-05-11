@@ -5,6 +5,9 @@ edition = "2021"
 description = "Not exactly a telescope, but it's useful sometimes. TUI to search/navigate through files and workspaces."
 license = "MIT"
 
+[lib]
+name = "binocular"
+
 [[bin]]
 name = "binocular"
 path = "src/main.rs"
