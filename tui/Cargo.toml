@@ -1,0 +1,48 @@
+[package]
+name = "binocular"
+version = "0.2.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.102"
+arboard = { version = "3.6.1", default-features = false }
+bzip2 = "0.6.1"
+clap = { version = "4.5.60", features = ["derive"] }
+crossterm = "0.29.0"
+flate2 = "1"
+ignore = "0.4.25"
+image = { version = "0.25.9", default-features = false, features = ["jpeg", "png", "gif", "webp", "bmp", "tiff", "ico"] }
+kanal = "0.1.1"
+lopdf = "0.40"
+memchr = "2"
+nucleo = "0.5.0"
+ratatui = "0.30.0"
+ratatui-image = { version = "11.0.1", default-features = false, features = ["crossterm"] }
+rayon = "1"
+rusqlite = { version = "0.39", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+similar = { version = "3.1.0", features = ["inline"] }
+syntect = { version = "5", default-features = false, features = ["default-syntaxes", "default-themes", "regex-fancy"] }
+tar = "0.4"
+toml = "1.1.2"
+tree-sitter = "0.26.6"
+tree-sitter-c = "0.24.1"
+tree-sitter-c-sharp = "0.23.1"
+tree-sitter-cpp = "0.23.4"
+tree-sitter-css = "0.25.0"
+tree-sitter-go = "0.25.0"
+tree-sitter-highlight = "0.26.6"
+tree-sitter-html = "0.23.2"
+tree-sitter-javascript = "0.25.0"
+tree-sitter-json = "0.24.8"
+tree-sitter-python = "0.25.0"
+tree-sitter-rust = "0.24.0"
+tree-sitter-toml-ng = "0.7.0"
+tree-sitter-typescript = "0.23.2"
+tree-sitter-yaml = "0.7.2"
+xz2 = "0.1"
+zip = { version = "8.6.0", default-features = false, features = ["deflate", "bzip2", "zstd", "aes-crypto"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"

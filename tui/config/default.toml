@@ -1,0 +1,81 @@
+# Binocular configuration
+#
+# ── Keybinding syntax ────────────────────────────────────────────────────────
+#
+# Bind an action to a single key:
+#   action = "key"
+#
+# Bind an action to multiple keys (any of them will trigger it):
+#   action = ["key1", "key2"]
+#
+# Key format:  [modifier+]* key   (case-insensitive)
+#
+# Available modifiers:
+#   ctrl  (alias: control)
+#   shift
+#   alt   (alias: meta)
+#
+# Named keys:
+#   enter, tab, esc, space, backspace, delete, insert
+#   up, down, left, right
+#   pageup, pagedown, home, end
+#   f1 – f12
+#
+# Single characters: a-z, 0-9, punctuation  (e.g. "x", "/", ".")
+#
+# Examples:
+#   quit                = "ctrl+c"
+#   scroll_preview_up   = ["pageup", "ctrl+u"]
+#
+# ── Terminal compatibility ───────────────────────────────────────────────────
+#
+# Not all key combinations work in every terminal. This is a terminal
+# limitation, not a bug in binocular.
+#
+# RELIABLE (work in virtually every terminal):
+#   ctrl+a through ctrl+z   — map to ASCII control codes
+#   f1 – f12                — dedicated escape sequences
+#   pageup, pagedown, home, end, insert, delete
+#   arrow keys (up/down/left/right)
+#
+# UNRELIABLE (may silently do nothing or type a character instead):
+#   ctrl+shift+letter  — most terminals cannot distinguish this from ctrl+letter
+#                        or shift+letter; the extra modifier is dropped
+#   ctrl+punctuation   — terminals send the same byte as the bare character,
+#                        so the ctrl modifier is invisible to the app
+#   alt/meta+key       — macOS Terminal.app sends a special Unicode character
+#                        instead of an escape sequence unless "Use Option as
+#                        Meta Key" is enabled in preferences
+#
+# These combinations DO work in terminals that support the Kitty keyboard
+# protocol: kitty, WezTerm, ghostty, foot (with protocol enabled).
+# ─────────────────────────────────────────────────────────────────────────────
+
+[keybindings]
+quit                       = "ctrl+c"
+toggle_help                = "ctrl+h"
+toggle_preview_focus       = "ctrl+w"
+toggle_preview_fullscreen  = "ctrl+f"
+swap_panes                 = "ctrl+e"
+preview_wider              = "ctrl+p"
+preview_narrower           = "ctrl+n"
+toggle_search_bar_position = "ctrl+t"
+toggle_preview_visibility  = "ctrl+b"
+toggle_exact               = "ctrl+x"
+
+mode_path  = "f1"
+mode_files = "f2"
+mode_grep  = "f3"
+mode_dirs  = "f4"
+
+scroll_preview_up   = ["pageup",   "ctrl+u"]
+scroll_preview_down = ["pagedown", "ctrl+d"]
+
+mark_result         = "tab"
+mark_diff_result    = "f5"
+select_from_preview = "enter"
+
+[log]
+# Maximum number of log entries kept in memory (initial file load + streaming).
+# Older entries are dropped when this limit is reached.
+max_entries = 100000

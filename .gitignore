@@ -1,10 +1,29 @@
-out
-dist
-node_modules
-.vscode-test/
-*.vsix
-.vscode/configurationCache.log
-.vscode/dryrun.log
-.vscode/targets.log
+# Rust
+/target
+**/*.rs.bk
+Cargo.lock
 
+# VS Code Extension
+/vscode/node_modules
+/vscode/out
+/vscode/dist
+/vscode/*.vsix
+/vscode/.vscode-test
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
 .DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local

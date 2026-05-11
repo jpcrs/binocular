@@ -1,0 +1,109 @@
+name: Release Extension
+
+on:
+  push:
+    tags:
+      - 'ext-v*'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="ext-v$(grep '"version"' vscode/package.json | head -1 | sed 's/.*: *"\(.*\)".*/\1/')"
+          fi
+          VERSION="${TAG#ext-v}"
+          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Validate tag matches package.json
+        if: github.event_name == 'push'
+        run: |
+          PKG_VERSION=$(grep '"version"' vscode/package.json | head -1 | sed 's/.*: *"\(.*\)".*/\1/')
+          if [ "${{ steps.version.outputs.version }}" != "$PKG_VERSION" ]; then
+            echo "ERROR: tag version (${{ steps.version.outputs.version }}) != vscode/package.json ($PKG_VERSION)"
+            exit 1
+          fi
+
+  test:
+    needs: [version]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vscode
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - run: npm ci
+      - run: npm run compile
+
+  publish:
+    needs: [version, test]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vscode
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - run: npm ci
+      - run: npm run deploy
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - run: npx @vscode/vsce package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vscode-extension
+          path: vscode/*.vsix
+
+  github-release:
+    needs: [version, publish]
+    if: always() && needs.publish.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Extract changelog
+        id: changelog
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          awk -v ver="## [$VERSION]" '
+            $0 ~ ver { printing=1; next }
+            /^## \[/ && printing { exit }
+            printing { print }
+          ' vscode/CHANGELOG.md > /tmp/release_notes.md
+          if [ -s /tmp/release_notes.md ]; then
+            echo "has_changelog=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changelog=false" >> $GITHUB_OUTPUT
+          fi
+      - uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.version.outputs.tag_name }}
+          name: Extension v${{ needs.version.outputs.version }}
+          files: artifacts/**/*
+          body_path: ${{ steps.changelog.outputs.has_changelog == 'true' && '/tmp/release_notes.md' || '' }}

@@ -1,0 +1,151 @@
+name: Release TUI
+
+on:
+  push:
+    tags:
+      - 'tui-v*'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="tui-v$(grep '^version' tui/Cargo.toml | head -1 | sed 's/.*= *"\(.*\)".*/\1/')"
+          fi
+          VERSION="${TAG#tui-v}"
+          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Validate tag matches Cargo.toml
+        if: github.event_name == 'push'
+        run: |
+          CARGO_VERSION=$(grep '^version' tui/Cargo.toml | head -1 | sed 's/.*= *"\(.*\)".*/\1/')
+          if [ "${{ steps.version.outputs.version }}" != "$CARGO_VERSION" ]; then
+            echo "ERROR: tag version (${{ steps.version.outputs.version }}) != tui/Cargo.toml ($CARGO_VERSION)"
+            exit 1
+          fi
+
+  test:
+    needs: [version]
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test -p binocular
+
+  publish-cargo:
+    needs: [version, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo publish -p binocular --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  build-binaries:
+    needs: [version, test]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            suffix: linux-x64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            suffix: linux-arm64
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            suffix: macos-x64
+          - target: aarch64-apple-darwin
+            os: macos-14
+            suffix: macos-arm64
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            suffix: windows-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: cargo install cross --git https://github.com/cross-rs/cross
+      - if: matrix.target != 'aarch64-unknown-linux-gnu'
+        run: cargo build --release -p binocular --target ${{ matrix.target }}
+      - if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: cross build --release -p binocular --target ${{ matrix.target }}
+      - name: Package binary
+        shell: bash
+        run: |
+          NAME=binocular-${{ needs.version.outputs.version }}-${{ matrix.suffix }}
+          mkdir -p dist/$NAME
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp target/${{ matrix.target }}/release/binocular.exe dist/$NAME/
+          else
+            cp target/${{ matrix.target }}/release/binocular dist/$NAME/
+          fi
+          cp README.md LICENSE dist/$NAME/
+          cd dist
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            7z a ../$NAME.zip $NAME
+          else
+            tar czf ../$NAME.tar.gz $NAME
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binocular-${{ matrix.suffix }}
+          path: |
+            binocular-*.tar.gz
+            binocular-*.zip
+
+  github-release:
+    needs: [version, publish-cargo, build-binaries]
+    if: always() && needs.publish-cargo.result == 'success' && needs.build-binaries.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Extract changelog
+        id: changelog
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          awk -v ver="## [$VERSION]" '
+            $0 ~ ver { printing=1; next }
+            /^## \[/ && printing { exit }
+            printing { print }
+          ' tui/CHANGELOG.md > /tmp/release_notes.md
+          if [ -s /tmp/release_notes.md ]; then
+            echo "has_changelog=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changelog=false" >> $GITHUB_OUTPUT
+          fi
+      - uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.version.outputs.tag_name }}
+          name: TUI v${{ needs.version.outputs.version }}
+          files: artifacts/**/*
+          body_path: ${{ steps.changelog.outputs.has_changelog == 'true' && '/tmp/release_notes.md' || '' }}
