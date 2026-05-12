@@ -350,7 +350,10 @@ fn apply_normal_cursor(line: &mut Line<'static>, cursor_char: usize) {
     }
 
     if !applied {
-        spans.push(Span::styled(" ", Style::default().bg(Color::White).fg(Color::Black)));
+        spans.push(Span::styled(
+            " ",
+            Style::default().bg(Color::White).fg(Color::Black),
+        ));
     }
 
     line.spans = spans;

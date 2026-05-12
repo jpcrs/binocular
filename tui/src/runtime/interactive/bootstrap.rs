@@ -150,11 +150,7 @@ fn prime_search_log_and_diff_state(
         } else {
             app.runtime.run.log_files[0].display().to_string()
         };
-        structured_log::initialize_empty_stream(
-            app,
-            path,
-            structured_log::LogFormat::Jsonl,
-        );
+        structured_log::initialize_empty_stream(app, path, structured_log::LogFormat::Jsonl);
         return;
     }
 

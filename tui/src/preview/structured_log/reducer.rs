@@ -35,8 +35,7 @@ pub(crate) fn append_entries(lp: &mut LogPreview, entries: Vec<LogEntry>, max_en
         }
 
         for (field, _) in &entry.fields {
-            if !lp.log.all_fields.iter().any(|f| f == field)
-                && new_fields.insert(field.clone())
+            if !lp.log.all_fields.iter().any(|f| f == field) && new_fields.insert(field.clone()) {
             {
                 lp.filter_state.add_new_visible_col(field);
             }

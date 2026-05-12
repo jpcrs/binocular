@@ -166,11 +166,13 @@ fn detect_format_from_files(files: &[PathBuf]) -> Option<LogFormat> {
             if trimmed.is_empty() {
                 continue;
             }
-            return Some(if serde_json::from_str::<serde_json::Value>(trimmed).is_ok() {
-                LogFormat::Jsonl
-            } else {
-                LogFormat::Logfmt
-            });
+            return Some(
+                if serde_json::from_str::<serde_json::Value>(trimmed).is_ok() {
+                    LogFormat::Jsonl
+                } else {
+                    LogFormat::Logfmt
+                },
+            );
         }
     }
     None

@@ -8,8 +8,16 @@ use crate::runtime::interactive::input::InputEvent;
 use crate::search::controller::SearchController;
 use crate::search::matcher::MatcherCommand;
 use crate::ui;
+use crossterm::{
+    execute, queue,
+    terminal::{BeginSynchronizedUpdate, EndSynchronizedUpdate},
+};
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
+use std::time::{Duration, Instant};
+
+const MAX_PENDING_EVENTS_PER_FRAME: usize = 64;
+const PERIODIC_RENDER_INTERVAL: Duration = Duration::from_millis(120);
 
 pub fn run_event_loop(
     app: &mut App,
@@ -23,13 +31,33 @@ pub fn run_event_loop(
 ) -> anyhow::Result<()> {
     let mut item_limit = 100;
 
-    loop {
-        app.refresh_viewports();
-        sync_cursor_style(app, terminal_session);
-        terminal.draw(|f| ui::draw(f, app))?;
+    render_frame(app, terminal, terminal_session)?;
+    let mut last_render_at = Instant::now();
 
-        if let Ok(event) = rx_main.recv() {
-            handle_app_event(
+    loop {
+        let event = match rx_main.recv() {
+            Ok(event) => event,
+            Err(channel::ChannelError::Disconnected) => return Ok(()),
+            Err(err) => return Err(err.into()),
+        };
+        let mut saw_tick = matches!(event, AppEvent::Input(InputEvent::Tick));
+        let mut render_requested = handle_app_event(
+            app,
+            event,
+            tx_preview_req,
+            tx_cmd_noop,
+            search_sessions,
+            log_max_entries,
+        );
+
+        for _ in 0..MAX_PENDING_EVENTS_PER_FRAME {
+            let event = match rx_main.try_recv() {
+                Ok(Some(event)) => event,
+                Ok(None) | Err(channel::ChannelError::Disconnected) => break,
+                Err(err) => return Err(err.into()),
+            };
+            saw_tick |= matches!(event, AppEvent::Input(InputEvent::Tick));
+            render_requested |= handle_app_event(
                 app,
                 event,
                 tx_preview_req,
@@ -52,7 +80,46 @@ pub fn run_event_loop(
         if app.ui.should_quit {
             return Ok(());
         }
+
+        if saw_tick
+            && !render_requested
+            && should_render_periodically(app)
+            && last_render_at.elapsed() >= PERIODIC_RENDER_INTERVAL
+        {
+            render_requested = true;
+        }
+
+        if render_requested {
+            render_frame(app, terminal, terminal_session)?;
+            last_render_at = Instant::now();
+        }
     }
+}
+
+fn render_frame(
+    app: &mut App,
+    terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
+    terminal_session: &mut TerminalSessionGuard,
+) -> anyhow::Result<()> {
+    app.refresh_viewports();
+    sync_cursor_style(app, terminal_session);
+
+    queue!(terminal.backend_mut(), BeginSynchronizedUpdate).ok();
+    terminal.draw(|f| ui::draw(f, app))?;
+    execute!(terminal.backend_mut(), EndSynchronizedUpdate).ok();
+
+    Ok(())
+}
+
+fn should_render_periodically(app: &App) -> bool {
+    app.search_session.search.working
+        || app
+            .preview_session
+            .preview
+            .state
+            .status_message
+            .as_ref()
+            .is_some_and(|(_, shown_at)| shown_at.elapsed().as_secs() < 3)
 }
 
 fn sync_cursor_style(app: &App, terminal_session: &mut TerminalSessionGuard) {
@@ -68,7 +135,7 @@ fn handle_app_event(
     tx_cmd_noop: &channel::DefaultSender<MatcherCommand>,
     search_sessions: &Option<SearchController>,
     log_max_entries: usize,
-) {
+) -> bool {
     match event {
         AppEvent::Input(input) => match input {
             InputEvent::Key(key) => {
@@ -77,12 +144,14 @@ fn handle_app_event(
                     .and_then(SearchController::command_sender)
                     .unwrap_or(tx_cmd_noop);
                 handlers::handle_input(app, key, tx_cmd, tx_preview_req);
+                true
             }
             InputEvent::Resize(width, height) => {
                 app.set_terminal_size(width, height);
                 app.refresh_viewports();
+                true
             }
-            InputEvent::Tick => {}
+            InputEvent::Tick => false,
         },
         AppEvent::Matcher(state, epoch) => {
             if search_sessions
@@ -90,11 +159,18 @@ fn handle_app_event(
                 .is_some_and(|search_sessions| search_sessions.accepts_epoch(epoch))
             {
                 apply_matcher_state(app, state, tx_preview_req);
+                true
+            } else {
+                false
             }
         }
-        AppEvent::Preview(source, text) => apply_preview_event(app, source, text),
+        AppEvent::Preview(source, text) => {
+            apply_preview_event(app, source, text);
+            true
+        }
         AppEvent::LogAppend(path, entries) => {
             structured_log::apply_append(app, &path, entries, log_max_entries);
+            true
         }
     }
 }
@@ -173,6 +249,27 @@ mod tests {
                 matcher: MatcherMode::Fuzzy,
             },
         }
+    }
+
+    fn app() -> App {
+        App::from_configs(run_config(), search_config(), LoadedAppConfig::default())
+    }
+
+    #[test]
+    fn periodic_render_runs_while_search_is_working() {
+        let mut app = app();
+        app.search_session.search.working = true;
+
+        assert!(should_render_periodically(&app));
+    }
+
+    #[test]
+    fn periodic_render_stops_after_status_message_expires() {
+        let mut app = app();
+        app.preview_session.preview.state.status_message =
+            Some(("Saved".to_string(), Instant::now() - Duration::from_secs(4)));
+
+        assert!(!should_render_periodically(&app));
     }
 
     #[test]

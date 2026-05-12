@@ -2,6 +2,8 @@ use crate::infra::channel::Sender;
 use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
 use std::time::Duration;
 
+const TICK_RATE: Duration = Duration::from_millis(120);
+
 pub enum InputEvent {
     Key(KeyEvent),
     Resize(u16, u16),
@@ -10,11 +12,10 @@ pub enum InputEvent {
 
 pub fn spawn_input_handler(tx: impl Sender<InputEvent>) {
     std::thread::spawn(move || {
-        let tick_rate = Duration::from_millis(16);
         let mut last_tick = std::time::Instant::now();
 
         loop {
-            let timeout = tick_rate
+            let timeout = TICK_RATE
                 .checked_sub(last_tick.elapsed())
                 .unwrap_or_else(|| Duration::from_secs(0));
 
@@ -32,7 +33,7 @@ pub fn spawn_input_handler(tx: impl Sender<InputEvent>) {
                 }
             }
 
-            if last_tick.elapsed() >= tick_rate {
+            if last_tick.elapsed() >= TICK_RATE {
                 let _ = tx.send(InputEvent::Tick);
                 last_tick = std::time::Instant::now();
             }
