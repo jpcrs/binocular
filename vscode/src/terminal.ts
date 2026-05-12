@@ -72,7 +72,7 @@ function buildShellInvocation(commandLine: string): {
   if (process.platform === "win32") {
     return {
       shellPath: "cmd.exe",
-      shellArgs: ["/d", "/c", commandLine],
+      shellArgs: ["/d", "/s", "/c", `"${commandLine}"`],
     };
   }
 
