@@ -37,8 +37,12 @@ pub fn render_search_results(
     scroll_state: &mut ListState,
     area: Rect,
 ) {
+    let visible_rows = area.height.saturating_sub(2) as usize;
+    let (start, end, selected) = visible_result_range(scroll_state, view.results.len(), visible_rows);
     let items: Vec<ListItem> = view
         .results
+        .get(start..end)
+        .unwrap_or(&[])
         .iter()
         .map(|result| build_result_item(result, view))
         .collect();
@@ -83,7 +87,34 @@ pub fn render_search_results(
         .highlight_symbol("▌ ")
         .highlight_spacing(HighlightSpacing::Always);
 
-    f.render_stateful_widget(list, area, scroll_state);
+    let mut visible_state = ListState::default().with_selected(selected);
+    f.render_stateful_widget(list, area, &mut visible_state);
+}
+
+fn visible_result_range(
+    scroll_state: &mut ListState,
+    result_count: usize,
+    visible_rows: usize,
+) -> (usize, usize, Option<usize>) {
+    if result_count == 0 || visible_rows == 0 {
+        *scroll_state.offset_mut() = 0;
+        return (0, 0, None);
+    }
+
+    let selected = scroll_state.selected().unwrap_or(0).min(result_count - 1);
+    let max_offset = result_count.saturating_sub(visible_rows);
+    let mut offset = scroll_state.offset().min(max_offset);
+
+    if selected < offset {
+        offset = selected;
+    } else if selected >= offset + visible_rows {
+        offset = selected + 1 - visible_rows;
+    }
+
+    *scroll_state.offset_mut() = offset;
+    let end = (offset + visible_rows).min(result_count);
+
+    (offset, end, Some(selected - offset))
 }
 
 fn build_count_badge(
@@ -570,5 +601,25 @@ mod tests {
             rendered,
             "[abcde] - (main, tag: v1.0) improve preview rendering (2 days ago) <jpcrs>"
         );
+    }
+
+    #[test]
+    fn visible_result_range_keeps_selected_row_in_view() {
+        let mut state = ListState::default().with_selected(Some(15)).with_offset(0);
+
+        let (start, end, selected) = visible_result_range(&mut state, 100, 8);
+
+        assert_eq!((start, end, selected), (8, 16, Some(7)));
+        assert_eq!(state.offset(), 8);
+    }
+
+    #[test]
+    fn visible_result_range_clamps_offset_when_results_shrink() {
+        let mut state = ListState::default().with_selected(Some(2)).with_offset(50);
+
+        let (start, end, selected) = visible_result_range(&mut state, 5, 10);
+
+        assert_eq!((start, end, selected), (0, 5, Some(2)));
+        assert_eq!(state.offset(), 0);
     }
 }

@@ -15,6 +15,8 @@ use crossterm::tty::IsTty;
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io::{self, Write};
 
+type InteractiveTerminal = Terminal<CrosstermBackend<io::BufWriter<io::Stderr>>>;
+
 pub fn run_interactive_with_configs(
     run_config: RunConfig,
     search_config: SearchConfig,
@@ -116,8 +118,8 @@ fn write_selection_output(output: &str, output_file: Option<&std::path::Path>) -
     Ok(())
 }
 
-fn build_terminal() -> anyhow::Result<Terminal<CrosstermBackend<io::Stderr>>> {
-    let backend = CrosstermBackend::new(io::stderr());
+fn build_terminal() -> anyhow::Result<InteractiveTerminal> {
+    let backend = CrosstermBackend::new(io::BufWriter::with_capacity(256 * 1024, io::stderr()));
     Ok(Terminal::new(backend)?)
 }
 

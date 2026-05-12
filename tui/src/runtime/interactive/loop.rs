@@ -16,12 +16,14 @@ use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
 use std::time::{Duration, Instant};
 
+type InteractiveTerminal = Terminal<CrosstermBackend<io::BufWriter<io::Stderr>>>;
+
 const MAX_PENDING_EVENTS_PER_FRAME: usize = 64;
 const PERIODIC_RENDER_INTERVAL: Duration = Duration::from_millis(120);
 
 pub fn run_event_loop(
     app: &mut App,
-    terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
+    terminal: &mut InteractiveTerminal,
     terminal_session: &mut TerminalSessionGuard,
     rx_main: &channel::DefaultReceiver<AppEvent>,
     tx_preview_req: &channel::DefaultSender<PreviewRequest>,
@@ -98,7 +100,7 @@ pub fn run_event_loop(
 
 fn render_frame(
     app: &mut App,
-    terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
+    terminal: &mut InteractiveTerminal,
     terminal_session: &mut TerminalSessionGuard,
 ) -> anyhow::Result<()> {
     app.refresh_viewports();
