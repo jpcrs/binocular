@@ -8,6 +8,7 @@ use std::path::PathBuf;
 pub struct RunConfig {
     pub headless: bool,
     pub output_format: OutputFormat,
+    pub output_file: Option<PathBuf>,
     pub stdin: bool,
     pub log: bool,
     pub log_files: Vec<PathBuf>,
@@ -22,6 +23,7 @@ impl RunConfig {
         Self {
             headless: args.headless,
             output_format: args.output_format,
+            output_file: args.output_file.clone(),
             stdin: args.stdin,
             log: args.log,
             log_files: args.log_files.clone(),

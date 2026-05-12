@@ -50,7 +50,28 @@ export async function ensureBinocularBinary(): Promise<string | undefined> {
     // but features may be broken.
   }
 
-  return binaryPath;
+  return (await resolveExecutablePath(binaryPath)) ?? binaryPath;
+}
+
+async function resolveExecutablePath(command: string): Promise<string | undefined> {
+  if (looksLikePath(command)) {
+    return command;
+  }
+
+  try {
+    const resolver = process.platform === "win32" ? "where.exe" : "which";
+    const { stdout } = await execFileAsync(resolver, [command]);
+    return stdout
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find((line) => line.length > 0);
+  } catch {
+    return undefined;
+  }
+}
+
+function looksLikePath(command: string): boolean {
+  return /[\\/]/.test(command) || /^[A-Za-z]:/.test(command);
 }
 
 function parseVersion(output: string): string | undefined {

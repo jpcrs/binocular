@@ -270,6 +270,7 @@ mod tests {
         RunConfig {
             headless: false,
             output_format: OutputFormat::Plain,
+            output_file: None,
             stdin: false,
             log: false,
             log_files: vec![],

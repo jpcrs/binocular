@@ -29,6 +29,10 @@ pub struct GlobalArgs {
     #[arg(long, value_enum, default_value_t = OutputFormat::Plain)]
     pub output_format: OutputFormat,
 
+    /// Write final selection output to this file instead of stdout
+    #[arg(long, value_name = "FILE")]
+    pub output_file: Option<PathBuf>,
+
     /// Preview command (supports '{}' for full item, '{0}', '{1}', ... for delimiter-split parts)
     #[arg(long)]
     pub preview: Option<String>,
@@ -177,6 +181,7 @@ pub struct Args {
     pub headless: bool,
     pub diff: Option<Vec<PathBuf>>,
     pub output_format: OutputFormat,
+    pub output_file: Option<PathBuf>,
     pub stdin: bool,
     pub git_search_scope: Option<GitSearchScope>,
     pub preview: Option<String>,
@@ -207,6 +212,7 @@ impl Default for Args {
             headless: false,
             diff: None,
             output_format: OutputFormat::Plain,
+            output_file: None,
             stdin: false,
             git_search_scope: None,
             preview: None,
@@ -223,6 +229,7 @@ impl Cli {
         let mut args = Args {
             headless: self.global.headless,
             output_format: self.global.output_format,
+            output_file: self.global.output_file,
             preview: self.global.preview,
             delimiter: self.global.delimiter,
             split: self.global.split,

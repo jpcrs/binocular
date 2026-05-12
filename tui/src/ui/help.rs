@@ -509,6 +509,7 @@ mod tests {
             crate::runtime::config::RunConfig {
                 headless: false,
                 output_format: crate::cli::args::OutputFormat::Plain,
+                output_file: None,
                 stdin: false,
                 log: false,
                 diff: None,
@@ -551,6 +552,7 @@ mod tests {
             crate::runtime::config::RunConfig {
                 headless: false,
                 output_format: crate::cli::args::OutputFormat::Plain,
+                output_file: None,
                 stdin: false,
                 log: false,
                 diff: None,

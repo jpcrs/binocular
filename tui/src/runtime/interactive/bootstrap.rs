@@ -13,7 +13,7 @@ use crate::search::controller::SearchController;
 use crate::search::types::SearchConfig;
 use crossterm::tty::IsTty;
 use ratatui::{backend::CrosstermBackend, Terminal};
-use std::io::{self};
+use std::io::{self, Write};
 
 pub fn run_interactive_with_configs(
     run_config: RunConfig,
@@ -98,7 +98,19 @@ pub fn run_interactive_with_configs(
     drop(terminal_session);
 
     if let Some(output) = rendered_output {
-        println!("{}", output);
+        write_selection_output(&output, app.runtime.run.output_file.as_deref())?;
+    }
+
+    Ok(())
+}
+
+fn write_selection_output(output: &str, output_file: Option<&std::path::Path>) -> anyhow::Result<()> {
+    if let Some(path) = output_file {
+        std::fs::write(path, output)?;
+    } else {
+        let stdout = io::stdout();
+        let mut out = io::BufWriter::new(stdout.lock());
+        writeln!(out, "{}", output)?;
     }
 
     Ok(())

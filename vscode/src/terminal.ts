@@ -7,6 +7,7 @@ const PICKER_TERMINAL_NAME = "Binocular Picker";
 
 interface CommandSpec {
   command: string;
+  globalArgs?: string[];
   args?: string[];
   cwd?: vscode.Uri;
   env?: Record<string, string>;
@@ -21,11 +22,10 @@ export async function launchPickerTerminal(spec: CommandSpec): Promise<string | 
     os.tmpdir(),
     `binocular-selection-${Date.now()}-${Math.random().toString(36).slice(2)}.jsonl`,
   );
-  const commandLine = buildCommandLine(spec.command, spec.args ?? [], outputFile, spec.useShell);
   const terminal = createTerminal({
     ...spec,
     name: PICKER_TERMINAL_NAME,
-    commandLine,
+    globalArgs: [...(spec.globalArgs ?? []), "--output-file", outputFile],
   });
 
   terminal.show(false);
@@ -35,7 +35,12 @@ export async function launchPickerTerminal(spec: CommandSpec): Promise<string | 
 export async function launchCustomTerminal(spec: CommandSpec): Promise<void> {
   disposeTerminalByName(spec.name);
   const previousEditor = vscode.window.activeTextEditor;
-  const commandLine = buildCommandLine(spec.command, spec.args ?? [], undefined, spec.useShell);
+  const commandLine = buildCommandLine(
+    spec.command,
+    getCommandArgs(spec),
+    undefined,
+    spec.useShell,
+  );
   const terminal = createTerminal({
     ...spec,
     commandLine,
@@ -47,9 +52,22 @@ export async function launchCustomTerminal(spec: CommandSpec): Promise<void> {
 }
 
 function createTerminal(
-  spec: CommandSpec & { commandLine: string },
+  spec: CommandSpec & { commandLine?: string },
 ): vscode.Terminal {
-  const { shellPath, shellArgs } = buildShellInvocation(spec.commandLine);
+  if (!spec.useShell) {
+    return vscode.window.createTerminal({
+      name: spec.name,
+      shellPath: spec.command,
+      shellArgs: getCommandArgs(spec),
+      cwd: spec.cwd,
+      env: spec.env,
+      location: vscode.TerminalLocation.Editor,
+    });
+  }
+
+  const commandLine =
+    spec.commandLine ?? buildCommandLine(spec.command, getCommandArgs(spec), undefined, true);
+  const { shellPath, shellArgs } = buildShellInvocation(commandLine);
   return vscode.window.createTerminal({
     name: spec.name,
     shellPath,
@@ -58,6 +76,10 @@ function createTerminal(
     env: spec.env,
     location: vscode.TerminalLocation.Editor,
   });
+}
+
+function getCommandArgs(spec: CommandSpec): string[] {
+  return [...(spec.globalArgs ?? []), ...(spec.args ?? [])];
 }
 
 function disposeTerminalByName(name: string): void {

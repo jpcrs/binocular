@@ -34,11 +34,10 @@ export async function runPickerCommand(
   const output = await launchPickerTerminal({
     name,
     command: binaryPath,
+    globalArgs: ["--output-format", "jsonl"],
     args: [
-      "--output-format",
-      "jsonl",
-      ...(loadConfig().useExact ? ["--exact"] : []),
       ...optionArgs,
+      ...(loadConfig().useExact ? ["--exact"] : []),
       ...locationArgs,
       ...(query ? [query] : []),
     ],
@@ -77,11 +76,10 @@ export async function runConfiguredPickerCommand(
   const output = await launchPickerTerminal({
     name,
     command: binaryPath,
+    globalArgs: ["--output-format", "jsonl"],
     args: [
-      "--output-format",
-      "jsonl",
-      ...(loadConfig().useExact ? ["--exact"] : []),
       ...optionArgs,
+      ...(loadConfig().useExact ? ["--exact"] : []),
       ...locationArgs,
       ...(query ? [query] : []),
     ],
