@@ -4,7 +4,7 @@
   "publisher": "jpcrs",
   "description": "Not exactly a telescope, but it's useful sometimes. Extension to search/navigate through files and workspaces.",
   "icon": "assets/binocular.png",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "repository": {
     "url": "https://github.com/jpcrs/Binocular"
   },
