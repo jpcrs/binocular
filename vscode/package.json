@@ -4,7 +4,7 @@
   "publisher": "jpcrs",
   "description": "Not exactly a telescope, but it's useful sometimes. Extension to search/navigate through files and workspaces.",
   "icon": "assets/binocular.png",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "repository": {
     "url": "https://github.com/jpcrs/Binocular"
   },
@@ -37,57 +37,57 @@
     "commands": [
       {
         "command": "binocular.searchPath",
-        "title": "Binocular: Search Paths",
+        "title": "Search Paths",
         "category": "Binocular"
       },
       {
         "command": "binocular.searchPathConfigured",
-        "title": "Binocular: Search Paths (Configured Folders)",
+        "title": "Search Paths (Configured Folders)",
         "category": "Binocular"
       },
       {
         "command": "binocular.searchFiles",
-        "title": "Binocular: Search Files",
+        "title": "Search Files",
         "category": "Binocular"
       },
       {
         "command": "binocular.searchFilesConfigured",
-        "title": "Binocular: Search Files (Configured Folders)",
+        "title": "Search Files (Configured Folders)",
         "category": "Binocular"
       },
       {
         "command": "binocular.searchContent",
-        "title": "Binocular: Search Content",
+        "title": "Search Content",
         "category": "Binocular"
       },
       {
         "command": "binocular.searchContentConfigured",
-        "title": "Binocular: Search Content (Configured Folders)",
+        "title": "Search Content (Configured Folders)",
         "category": "Binocular"
       },
       {
         "command": "binocular.searchContentWithSelection",
-        "title": "Binocular: Search Content With Selection",
+        "title": "Search Content With Selection",
         "category": "Binocular"
       },
       {
         "command": "binocular.searchContentWithSelectionConfigured",
-        "title": "Binocular: Search Content With Selection (Configured Folders)",
+        "title": "Search Content With Selection (Configured Folders)",
         "category": "Binocular"
       },
       {
         "command": "binocular.searchDirectories",
-        "title": "Binocular: Search Directories",
+        "title": "Search Directories",
         "category": "Binocular"
       },
       {
         "command": "binocular.searchDirectoriesConfigured",
-        "title": "Binocular: Search Directories (Configured Folders)",
+        "title": "Search Directories (Configured Folders)",
         "category": "Binocular"
       },
       {
         "command": "binocular.runCustomCommand",
-        "title": "Binocular: Run Custom Command",
+        "title": "Run Custom Command",
         "category": "Binocular"
       }
     ],
