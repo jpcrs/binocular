@@ -24,6 +24,24 @@ pub fn run_interactive_with_configs(
     persisted_layout: PersistedLayout,
     log_max_entries: usize,
 ) -> anyhow::Result<()> {
+    run_interactive_with_start_time(
+        run_config,
+        search_config,
+        app_config,
+        persisted_layout,
+        log_max_entries,
+        std::time::Instant::now(),
+    )
+}
+
+pub fn run_interactive_with_start_time(
+    run_config: RunConfig,
+    search_config: SearchConfig,
+    app_config: LoadedAppConfig,
+    persisted_layout: PersistedLayout,
+    log_max_entries: usize,
+    started_at: std::time::Instant,
+) -> anyhow::Result<()> {
     let prepared_input = startup::prepare_interactive_input_with_run_config(&run_config)?;
     let mut terminal_session = TerminalSessionGuard::enter()?;
     let mut terminal = build_terminal()?;
@@ -70,6 +88,9 @@ pub fn run_interactive_with_configs(
     }
 
     let mut app = App::from_configs(run_config, search_config, app_config);
+    if let Some(bench) = app.ui.bench.as_mut() {
+        bench.started_at = started_at;
+    }
     initialize_app(&mut app, &persisted_layout, terminal.size()?.into());
     prime_search_log_and_diff_state(&mut app, search_sessions.as_ref(), &tx_preview_req);
 
@@ -106,7 +127,10 @@ pub fn run_interactive_with_configs(
     Ok(())
 }
 
-fn write_selection_output(output: &str, output_file: Option<&std::path::Path>) -> anyhow::Result<()> {
+fn write_selection_output(
+    output: &str,
+    output_file: Option<&std::path::Path>,
+) -> anyhow::Result<()> {
     if let Some(path) = output_file {
         std::fs::write(path, output)?;
     } else {
@@ -165,6 +189,9 @@ fn prime_search_log_and_diff_state(
             app.runtime.run.log_files[0].display().to_string()
         };
         structured_log::initialize_empty_stream(app, path, structured_log::LogFormat::Jsonl);
+        if let Some(bench) = app.ui.bench.as_mut() {
+            bench.first_preview = Some(bench.started_at.elapsed());
+        }
         return;
     }
 

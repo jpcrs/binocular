@@ -1,6 +1,7 @@
 use crate::app::App;
 use ratatui::Frame;
 
+pub mod bench;
 pub mod help;
 pub mod indicators;
 pub mod layout;
@@ -9,6 +10,12 @@ pub mod search;
 pub mod shortcuts;
 
 pub fn draw(f: &mut Frame, app: &mut App) {
+    draw_content(f, app);
+    help::render_help_modal(f, app);
+    bench::render_bench_modal(f, app);
+}
+
+fn draw_content(f: &mut Frame, app: &mut App) {
     let search_view = search::SearchBarView {
         app_mode: app.ui.mode,
         search_mode: app.search_session.query.mode,
@@ -107,6 +114,4 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             preview_area,
         );
     }
-
-    help::render_help_modal(f, app);
 }

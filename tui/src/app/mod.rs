@@ -1,4 +1,5 @@
 mod action;
+pub mod bench;
 mod layout;
 mod state;
 

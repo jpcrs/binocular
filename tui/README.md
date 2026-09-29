@@ -87,6 +87,7 @@ binocular diff old.rs new.rs
 ### Global Options
 
 - `-H, --headless` — Skip the TUI and print results directly.
+- `--bench` — Collect live performance metrics and open the benchmarks modal.
 - `--output-format <plain|jsonl>` — Format for interactive selection output.
 - `--preview <command>` — Use a custom preview command.
 - `--delimiter <string>` — Delimiter for preview placeholders (default: `:`).
@@ -108,6 +109,39 @@ The preview pane handles a wide variety of file types out of the box:
 - **Media** — Audio/video metadata (ID3, FLAC, Spotlight on macOS) with embedded artwork.
 - **Binary** — Hex dump, entropy analysis, and printable string extraction.
 - **Structured logs** — JSONL and logfmt parsing with live tail support.
+
+### Live Benchmarks
+
+```bash
+binocular --bench
+binocular files --bench
+binocular --bench log service.log
+```
+
+`--bench` opens a live metrics modal. Press `F12` to toggle it, `Esc` or `q`
+to close it, and `↑`/`↓` (or `j`/`k`) to scroll on smaller terminals. Change
+`keybindings.toggle_bench` in your config to customize the shortcut.
+Metrics continue collecting while the modal is closed; without `--bench`,
+collection is disabled. The flag cannot be combined with `--headless`.
+
+The modal reports elapsed time from launch to the first drawn frame, first
+nonempty search results, and first available preview. Unavailable milestones
+show `Waiting…` or `N/A`; the log viewer's first preview is its empty stream view.
+These milestones include CLI/configuration and input preparation time (including
+waiting for piped input), and do not represent completion of background work.
+
+Draw and event-processing metrics show last, mean, p95, and maximum duration over
+the latest 120 samples, plus session frame/batch counts and search totals.
+UI status uses draw p95: healthy at ≤16.67 ms, elevated up to 50 ms, and slow above
+50 ms. Draw timing includes layout, rendering, terminal flush, and the modal
+itself, but cannot measure when the terminal actually displays a frame. Event
+batch timing excludes idle waits, drawing, and background workers. The modal
+refreshes about every 120 ms while open; this is an event-driven UI, so idle FPS
+is not used as a performance score. The build type is shown for comparison;
+use a release build for representative measurements.
+
+See [performance measurements](PERFORMANCE.md) for reproducible workloads,
+before/after results, and compatibility checks.
 
 ### Vim Navigation
 

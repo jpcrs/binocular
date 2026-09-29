@@ -33,89 +33,47 @@ pub fn get_highlighter() -> &'static RwLock<Highlighter> {
     HIGHLIGHTER.get_or_init(|| RwLock::new(Highlighter::new()))
 }
 
+// Compile only the requested grammar's highlight query. Each slot is initialized
+// once, including failed configurations (which continue to use the fallback).
+static LANGUAGE_CONFIGS: [OnceLock<Option<Arc<HighlightConfiguration>>>; LANGUAGE_KEYS.len()] =
+    [const { OnceLock::new() }; LANGUAGE_KEYS.len()];
+
+pub fn get_config(name: &str) -> Option<Arc<HighlightConfiguration>> {
+    let index = LANGUAGE_KEYS.iter().position(|key| *key == name)?;
+    LANGUAGE_CONFIGS[index]
+        .get_or_init(|| {
+            let query = match name {
+                "rust" => tree_sitter_rust::HIGHLIGHTS_QUERY,
+                "python" => tree_sitter_python::HIGHLIGHTS_QUERY,
+                "javascript" => tree_sitter_javascript::HIGHLIGHT_QUERY,
+                "typescript" => tree_sitter_typescript::HIGHLIGHTS_QUERY,
+                "json" => tree_sitter_json::HIGHLIGHTS_QUERY,
+                "toml" => tree_sitter_toml_ng::HIGHLIGHTS_QUERY,
+                "yaml" => tree_sitter_yaml::HIGHLIGHTS_QUERY,
+                "html" => tree_sitter_html::HIGHLIGHTS_QUERY,
+                "css" => tree_sitter_css::HIGHLIGHTS_QUERY,
+                "c" => tree_sitter_c::HIGHLIGHT_QUERY,
+                "cpp" => tree_sitter_cpp::HIGHLIGHT_QUERY,
+                "go" => tree_sitter_go::HIGHLIGHTS_QUERY,
+                "csharp" => include_str!("../../../queries/csharp-highlights.scm"),
+                _ => return None,
+            };
+            let mut config =
+                HighlightConfiguration::new(language_from_key(name)?, "utf-8", query, "", "")
+                    .ok()?;
+            config.configure(&HIGHLIGHT_NAMES);
+            Some(Arc::new(config))
+        })
+        .clone()
+}
+
+/// Return all configurations for callers that explicitly need the full registry.
 pub fn get_configs() -> &'static BTreeMap<String, Arc<HighlightConfiguration>> {
     CONFIGS.get_or_init(|| {
-        let mut map = BTreeMap::new();
-        add_highlight_config(
-            &mut map,
-            "rust",
-            tree_sitter_rust::LANGUAGE.into(),
-            tree_sitter_rust::HIGHLIGHTS_QUERY,
-        );
-        add_highlight_config(
-            &mut map,
-            "python",
-            tree_sitter_python::LANGUAGE.into(),
-            tree_sitter_python::HIGHLIGHTS_QUERY,
-        );
-        add_highlight_config(
-            &mut map,
-            "javascript",
-            tree_sitter_javascript::LANGUAGE.into(),
-            tree_sitter_javascript::HIGHLIGHT_QUERY,
-        );
-        add_highlight_config(
-            &mut map,
-            "typescript",
-            tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
-            tree_sitter_typescript::HIGHLIGHTS_QUERY,
-        );
-        add_highlight_config(
-            &mut map,
-            "json",
-            tree_sitter_json::LANGUAGE.into(),
-            tree_sitter_json::HIGHLIGHTS_QUERY,
-        );
-        add_highlight_config(
-            &mut map,
-            "toml",
-            tree_sitter_toml_ng::LANGUAGE.into(),
-            tree_sitter_toml_ng::HIGHLIGHTS_QUERY,
-        );
-        add_highlight_config(
-            &mut map,
-            "yaml",
-            tree_sitter_yaml::LANGUAGE.into(),
-            tree_sitter_yaml::HIGHLIGHTS_QUERY,
-        );
-        add_highlight_config(
-            &mut map,
-            "html",
-            tree_sitter_html::LANGUAGE.into(),
-            tree_sitter_html::HIGHLIGHTS_QUERY,
-        );
-        add_highlight_config(
-            &mut map,
-            "css",
-            tree_sitter_css::LANGUAGE.into(),
-            tree_sitter_css::HIGHLIGHTS_QUERY,
-        );
-        add_highlight_config(
-            &mut map,
-            "c",
-            tree_sitter_c::LANGUAGE.into(),
-            tree_sitter_c::HIGHLIGHT_QUERY,
-        );
-        add_highlight_config(
-            &mut map,
-            "cpp",
-            tree_sitter_cpp::LANGUAGE.into(),
-            tree_sitter_cpp::HIGHLIGHT_QUERY,
-        );
-        add_highlight_config(
-            &mut map,
-            "go",
-            tree_sitter_go::LANGUAGE.into(),
-            tree_sitter_go::HIGHLIGHTS_QUERY,
-        );
-        add_highlight_config(
-            &mut map,
-            "csharp",
-            tree_sitter_c_sharp::LANGUAGE.into(),
-            include_str!("../../../queries/csharp-highlights.scm"),
-        );
-
-        map
+        LANGUAGE_KEYS
+            .iter()
+            .filter_map(|name| get_config(name).map(|config| ((*name).to_string(), config)))
+            .collect()
     })
 }
 
@@ -262,18 +220,6 @@ impl SyntaxRegistry {
     }
 }
 
-fn add_highlight_config(
-    map: &mut BTreeMap<String, Arc<HighlightConfiguration>>,
-    name: &str,
-    language: tree_sitter::Language,
-    query: &str,
-) {
-    if let Ok(mut config) = HighlightConfiguration::new(language, "utf-8", query, "", "") {
-        config.configure(&HIGHLIGHT_NAMES);
-        map.insert(name.to_string(), Arc::new(config));
-    }
-}
-
 pub fn get_syntax_set() -> &'static SyntaxSet {
     SYNTAX_SET.get_or_init(SyntaxSet::load_defaults_newlines)
 }
@@ -302,5 +248,20 @@ fn language_from_key(name: &str) -> Option<tree_sitter::Language> {
         "go" => Some(tree_sitter::Language::from(tree_sitter_go::LANGUAGE)),
         "csharp" => Some(tree_sitter::Language::from(tree_sitter_c_sharp::LANGUAGE)),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_language_keeps_its_configuration_and_cached_identity() {
+        for name in LANGUAGE_KEYS {
+            let config = get_config(name).expect(name);
+            assert!(Arc::ptr_eq(&config, &get_config(name).unwrap()));
+            assert!(Arc::ptr_eq(&config, &get_configs()[name]));
+        }
+        assert!(get_config("unsupported").is_none());
     }
 }

@@ -197,6 +197,7 @@ mod tests {
     fn run_config() -> RunConfig {
         RunConfig {
             headless: false,
+            bench: false,
             output_format: crate::cli::args::OutputFormat::Plain,
             output_file: None,
             stdin: true,

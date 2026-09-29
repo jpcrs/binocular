@@ -202,6 +202,7 @@ pub struct PreviewSessionState {
 
 pub struct UiState {
     pub help: HelpState,
+    pub bench: Option<super::bench::BenchState>,
     pub layout: LayoutState,
     pub mode: Mode,
     pub should_quit: bool,
@@ -223,6 +224,9 @@ impl App {
         search_config: SearchConfig,
         app_config: LoadedAppConfig,
     ) -> Self {
+        let bench = run_config
+            .bench
+            .then(|| super::bench::BenchState::new(std::time::Instant::now()));
         let log_mode = run_config.log;
         let direct_diff_mode = run_config.diff.is_some();
         let search_settings = search_config.settings;
@@ -252,6 +256,7 @@ impl App {
             },
             ui: UiState {
                 help: HelpState::default(),
+                bench,
                 layout: LayoutState::default(),
                 should_quit: false,
                 mode: if log_mode || direct_diff_mode {
@@ -271,7 +276,21 @@ impl App {
             AppAction::Quit => self.ui.should_quit = true,
             AppAction::FocusSearch => self.ui.mode = Mode::Search,
             AppAction::FocusPreview => self.ui.mode = Mode::Preview,
+            AppAction::ToggleBench => {
+                if let Some(bench) = self.ui.bench.as_mut() {
+                    bench.visible = !bench.visible;
+                    self.ui.help.visible = false;
+                }
+            }
+            AppAction::CloseBench => {
+                if let Some(bench) = self.ui.bench.as_mut() {
+                    bench.visible = false;
+                }
+            }
             AppAction::ToggleHelp => {
+                if let Some(bench) = self.ui.bench.as_mut() {
+                    bench.visible = false;
+                }
                 self.ui.help.visible = !self.ui.help.visible;
                 if self.ui.help.visible {
                     self.ui.help.tab = if self.ui.mode == Mode::Preview {
@@ -450,6 +469,7 @@ mod tests {
     fn run_config() -> RunConfig {
         RunConfig {
             headless: false,
+            bench: false,
             output_format: OutputFormat::Plain,
             output_file: None,
             stdin: false,

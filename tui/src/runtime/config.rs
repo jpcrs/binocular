@@ -7,6 +7,7 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RunConfig {
     pub headless: bool,
+    pub bench: bool,
     pub output_format: OutputFormat,
     pub output_file: Option<PathBuf>,
     pub stdin: bool,
@@ -22,6 +23,7 @@ impl RunConfig {
     pub fn from_args(args: &Args) -> Self {
         Self {
             headless: args.headless,
+            bench: args.bench,
             output_format: args.output_format,
             output_file: args.output_file.clone(),
             stdin: args.stdin,
@@ -58,6 +60,13 @@ impl ResolvedCli {
     pub fn from_cli(cli: Cli, stdin_is_piped: bool) -> anyhow::Result<Self> {
         let args = cli.into_args();
         let run = RunConfig::from_args(&args).with_stdin(stdin_is_piped);
+
+        // Clap may not detect conflicts when global flags straddle a subcommand.
+        if run.bench && run.headless {
+            anyhow::bail!(
+                "--bench requires the interactive UI and cannot be combined with --headless"
+            );
+        }
 
         let git_search_scope = if let Some(path) = args.git_history.as_deref() {
             Some(resolve_history_scope(path)?)

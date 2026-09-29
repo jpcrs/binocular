@@ -42,6 +42,8 @@ pub fn run_event_loop(
             Err(channel::ChannelError::Disconnected) => return Ok(()),
             Err(err) => return Err(err.into()),
         };
+        // Start after recv: idle waiting is not UI processing time.
+        let batch_started = app.ui.bench.as_ref().map(|_| Instant::now());
         let mut saw_tick = matches!(event, AppEvent::Input(InputEvent::Tick));
         let mut render_requested = handle_app_event(
             app,
@@ -79,6 +81,12 @@ pub fn run_event_loop(
             }
         }
 
+        if let (Some(bench), Some(started)) = (app.ui.bench.as_mut(), batch_started) {
+            if render_requested {
+                bench.event_batches.record(started.elapsed());
+            }
+        }
+
         if app.ui.should_quit {
             return Ok(());
         }
@@ -103,18 +111,27 @@ fn render_frame(
     terminal: &mut InteractiveTerminal,
     terminal_session: &mut TerminalSessionGuard,
 ) -> anyhow::Result<()> {
+    let draw_started = app.ui.bench.as_ref().map(|_| Instant::now());
     app.refresh_viewports();
     sync_cursor_style(app, terminal_session);
 
     queue!(terminal.backend_mut(), BeginSynchronizedUpdate).ok();
     terminal.draw(|f| ui::draw(f, app))?;
+    if app.ui.bench.as_ref().is_some_and(|bench| bench.visible) {
+        terminal.hide_cursor()?;
+    }
     execute!(terminal.backend_mut(), EndSynchronizedUpdate).ok();
+
+    if let (Some(bench), Some(started)) = (app.ui.bench.as_mut(), draw_started) {
+        bench.record_draw(started.elapsed());
+    }
 
     Ok(())
 }
 
 fn should_render_periodically(app: &App) -> bool {
-    app.search_session.search.working
+    app.ui.bench.as_ref().is_some_and(|bench| bench.visible)
+        || app.search_session.search.working
         || app
             .preview_session
             .preview
@@ -182,6 +199,13 @@ fn apply_matcher_state(
     state: crate::search::matcher::MatcherState,
     tx_preview: &channel::DefaultSender<PreviewRequest>,
 ) {
+    if !state.results.is_empty() {
+        if let Some(bench) = app.ui.bench.as_mut() {
+            bench
+                .first_results
+                .get_or_insert_with(|| bench.started_at.elapsed());
+        }
+    }
     app.search_session.search.results = state.results;
     app.search_session.search.total_matches = state.total_matches;
     app.search_session.search.total_items = state.total_items;
@@ -193,6 +217,12 @@ fn apply_matcher_state(
 pub fn apply_preview_event(app: &mut App, source: PreviewSource, text: preview::PreviewContent) {
     if app.preview_session.preview.source.as_ref() != Some(&source) {
         return;
+    }
+
+    if let Some(bench) = app.ui.bench.as_mut() {
+        bench
+            .first_preview
+            .get_or_insert_with(|| bench.started_at.elapsed());
     }
 
     let preview_is_rich_text = matches!(text, preview::PreviewContent::RichText(_))
@@ -225,6 +255,7 @@ mod tests {
     fn run_config() -> RunConfig {
         RunConfig {
             headless: false,
+            bench: false,
             output_format: crate::cli::args::OutputFormat::Plain,
             output_file: None,
             stdin: false,
@@ -256,6 +287,44 @@ mod tests {
 
     fn app() -> App {
         App::from_configs(run_config(), search_config(), LoadedAppConfig::default())
+    }
+
+    #[test]
+    fn bench_refreshes_only_while_visible() {
+        let mut app = app();
+        assert!(!should_render_periodically(&app));
+        app.ui.bench = Some(crate::app::bench::BenchState::new(Instant::now()));
+        assert!(should_render_periodically(&app));
+        app.apply_action(crate::app::AppAction::CloseBench);
+        assert!(!should_render_periodically(&app));
+    }
+
+    #[test]
+    fn preview_milestone_ignores_stale_content_and_preserves_first_load() {
+        let mut app = app();
+        app.ui.bench = Some(crate::app::bench::BenchState::new(Instant::now()));
+        let current = PreviewSource::SearchItem(SearchItem::path("current.txt"));
+        let stale = PreviewSource::SearchItem(SearchItem::path("stale.txt"));
+        app.preview_session.preview.source = Some(current.clone());
+        apply_preview_event(
+            &mut app,
+            stale,
+            preview::PreviewContent::PlainText("old".into()),
+        );
+        assert!(app.ui.bench.as_ref().unwrap().first_preview.is_none());
+        apply_preview_event(
+            &mut app,
+            current.clone(),
+            preview::PreviewContent::PlainText("new".into()),
+        );
+        let first = app.ui.bench.as_ref().unwrap().first_preview;
+        assert!(first.is_some());
+        apply_preview_event(
+            &mut app,
+            current,
+            preview::PreviewContent::PlainText("updated".into()),
+        );
+        assert_eq!(app.ui.bench.as_ref().unwrap().first_preview, first);
     }
 
     #[test]

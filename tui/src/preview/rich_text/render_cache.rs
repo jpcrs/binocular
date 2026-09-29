@@ -8,7 +8,7 @@ use syntect::util::LinesWithEndings;
 use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent};
 
 use crate::preview::rich_text::syntax::{
-    detect_language, get_configs, get_highlighter, get_style, get_syntax_set, get_theme_set,
+    detect_language, get_config, get_highlighter, get_style, get_syntax_set, get_theme_set,
     SyntaxRegistry,
 };
 use crate::preview::rich_text::{RichTextDocument, TextBuffer};
@@ -38,9 +38,7 @@ fn build_display_lines(
         .iter()
         .any(|(s, e)| e - s > MAX_LINE_BYTES_FOR_HIGHLIGHTING);
     if !has_huge_line {
-        if let Some(config) =
-            detect_language(path).and_then(|lang| get_configs().get(lang).cloned())
-        {
+        if let Some(config) = detect_language(path).and_then(get_config) {
             if let Some(lines) = try_build_highlighted_lines(content, raw_lines, &config) {
                 return lines;
             }

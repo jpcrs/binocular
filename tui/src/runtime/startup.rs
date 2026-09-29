@@ -269,6 +269,7 @@ mod tests {
     fn run_config() -> RunConfig {
         RunConfig {
             headless: false,
+            bench: false,
             output_format: OutputFormat::Plain,
             output_file: None,
             stdin: false,

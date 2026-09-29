@@ -54,6 +54,8 @@
 [keybindings]
 quit                       = "ctrl+c"
 toggle_help                = "ctrl+h"
+# Live performance modal (requires --bench)
+toggle_bench               = "f12"
 toggle_preview_focus       = "ctrl+w"
 toggle_preview_fullscreen  = "ctrl+f"
 swap_panes                 = "ctrl+e"

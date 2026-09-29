@@ -73,6 +73,8 @@ pub enum AppAction {
     FocusSearch,
     FocusPreview,
     ToggleHelp,
+    ToggleBench,
+    CloseBench,
     CloseHelp,
     ShowHelpTab(HelpTab),
     NextHelpTab,

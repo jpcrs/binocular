@@ -172,6 +172,7 @@ impl OneOrMany {
 struct KeybindingsConfig {
     quit: Option<OneOrMany>,
     toggle_help: Option<OneOrMany>,
+    toggle_bench: Option<OneOrMany>,
     toggle_preview_focus: Option<OneOrMany>,
     toggle_preview_fullscreen: Option<OneOrMany>,
     swap_panes: Option<OneOrMany>,
@@ -217,6 +218,7 @@ impl Default for LogConfig {
 pub struct Keybindings {
     pub quit: Vec<KeyBinding>,
     pub toggle_help: Vec<KeyBinding>,
+    pub toggle_bench: Vec<KeyBinding>,
     pub toggle_preview_focus: Vec<KeyBinding>,
     pub toggle_preview_fullscreen: Vec<KeyBinding>,
     pub swap_panes: Vec<KeyBinding>,
@@ -247,6 +249,7 @@ impl Default for Keybindings {
         Self {
             quit: single(Char('c'), M::CONTROL),
             toggle_help: single(Char('h'), M::CONTROL),
+            toggle_bench: single(F(12), M::NONE),
             toggle_preview_focus: single(Char('w'), M::CONTROL),
             toggle_preview_fullscreen: single(Char('f'), M::CONTROL),
             swap_panes: single(Char('e'), M::CONTROL),
@@ -309,6 +312,7 @@ impl Keybindings {
         Self {
             quit: resolve!(quit),
             toggle_help: resolve!(toggle_help),
+            toggle_bench: resolve!(toggle_bench),
             toggle_preview_focus: resolve!(toggle_preview_focus),
             toggle_preview_fullscreen: resolve!(toggle_preview_fullscreen),
             swap_panes: resolve!(swap_panes),
@@ -424,4 +428,22 @@ pub fn load_keybindings() -> Keybindings {
 
 pub fn load_log_max_entries() -> usize {
     load_app_config().log.max_entries
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn benchmark_binding_defaults_and_can_be_overridden() {
+        for source in ["", DEFAULT_CONFIG] {
+            let config: RawAppConfig = toml::from_str(source).unwrap();
+            let bindings = Keybindings::from_config(config.keybindings);
+            assert_eq!(format_keybindings(&bindings.toggle_bench), "F12");
+        }
+        let config: RawAppConfig =
+            toml::from_str("[keybindings]\ntoggle_bench = 'ctrl+g'").unwrap();
+        let bindings = Keybindings::from_config(config.keybindings);
+        assert_eq!(format_keybindings(&bindings.toggle_bench), "Ctrl+G");
+    }
 }

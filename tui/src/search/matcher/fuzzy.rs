@@ -113,33 +113,6 @@ pub fn spawn_matcher(
             let total_matches = snapshot.matched_item_count() as u64;
             let total_items = snapshot.item_count() as u64;
 
-            let end = (item_limit as u64).min(total_matches);
-            let matched_items = snapshot.matched_items(0..end as u32);
-
-            let results: Vec<SearchResult> = matched_items
-                .map(|item| {
-                    let mut indices = Vec::new();
-                    let match_text = item.data.match_text(use_filename_only);
-                    let utf32_text = Utf32String::from(match_text.as_ref());
-
-                    let pattern = nucleo.pattern.column_pattern(0);
-                    let _ =
-                        pattern.indices(utf32_text.slice(..), &mut indices_matcher, &mut indices);
-
-                    let column = if is_content {
-                        item.data.content_match_column(&indices)
-                    } else {
-                        None
-                    };
-
-                    SearchResult {
-                        item: item.data.clone(),
-                        indices,
-                        column,
-                    }
-                })
-                .collect();
-
             if items_processed > 0 {
                 last_items_received = std::time::Instant::now();
             } else if !search_complete
@@ -150,13 +123,42 @@ pub fn spawn_matcher(
             }
 
             let working = (status.running || !search_complete) && !idle_timed_out;
-            let should_send = items_processed > 0
+            let should_send = status.changed
+                || items_processed > 0
                 || needs_reparse
                 || resized
                 || last_sent_total_matches != Some(total_matches)
                 || last_sent_working != Some(working);
 
             if should_send {
+                let end = (item_limit as u64).min(total_matches);
+                let matched_items = snapshot.matched_items(0..end as u32);
+
+                let results: Vec<SearchResult> = matched_items
+                    .map(|item| {
+                        let mut indices = Vec::new();
+
+                        let pattern = snapshot.pattern().column_pattern(0);
+                        let _ = pattern.indices(
+                            item.matcher_columns[0].slice(..),
+                            &mut indices_matcher,
+                            &mut indices,
+                        );
+
+                        let column = if is_content {
+                            item.data.content_match_column(&indices)
+                        } else {
+                            None
+                        };
+
+                        SearchResult {
+                            item: item.data.clone(),
+                            indices,
+                            column,
+                        }
+                    })
+                    .collect();
+
                 let _ = tx_state.try_send(MatcherState {
                     results,
                     total_matches,
@@ -172,4 +174,147 @@ pub fn spawn_matcher(
             }
         }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::infra::channel::{self, DefaultReceiver, DefaultSender};
+    use std::time::Instant;
+
+    struct Worker {
+        commands: DefaultSender<MatcherCommand>,
+        states: DefaultReceiver<MatcherState>,
+        stop: Arc<AtomicBool>,
+        handle: Option<std::thread::JoinHandle<()>>,
+    }
+
+    impl Worker {
+        fn new(filename: bool, content: bool) -> (Self, DefaultSender<Vec<SearchItem>>) {
+            let (items, rx_items) = channel::unbounded_default();
+            let (commands, rx_cmd) = channel::unbounded_default();
+            let (tx_state, states) = channel::unbounded_default();
+            let stop = Arc::new(AtomicBool::new(false));
+            let handle = Some(spawn_matcher(
+                rx_items,
+                rx_cmd,
+                stop.clone(),
+                tx_state,
+                filename,
+                content,
+            ));
+            (
+                Self {
+                    commands,
+                    states,
+                    stop,
+                    handle,
+                },
+                items,
+            )
+        }
+
+        fn until(&self, predicate: impl Fn(&MatcherState) -> bool) -> MatcherState {
+            let deadline = Instant::now() + Duration::from_secs(5);
+            while Instant::now() < deadline {
+                if let Some(state) = self.states.try_recv().unwrap() {
+                    if predicate(&state) {
+                        return state;
+                    }
+                } else {
+                    std::thread::sleep(Duration::from_millis(1));
+                }
+            }
+            panic!("matcher failed to publish the expected state");
+        }
+    }
+
+    impl Drop for Worker {
+        fn drop(&mut self) {
+            self.stop.store(true, Ordering::Relaxed);
+            self.handle.take().unwrap().join().unwrap();
+        }
+    }
+
+    #[test]
+    fn queries_with_equal_counts_resize_and_streaming_still_publish_results() {
+        let (worker, items) = Worker::new(false, false);
+        worker
+            .commands
+            .send(MatcherCommand::Query("alpha".into()))
+            .unwrap();
+        items
+            .send(
+                (0..300)
+                    .map(|i| SearchItem::path(format!("alpha_{i:03}")))
+                    .collect(),
+            )
+            .unwrap();
+        worker.until(|s| s.total_matches == 300 && s.results.len() == 100);
+        items
+            .send(
+                (0..300)
+                    .map(|i| SearchItem::path(format!("beta_{i:03}")))
+                    .collect(),
+            )
+            .unwrap();
+        drop(items);
+        worker.until(|s| !s.working && s.total_items == 600);
+        worker
+            .commands
+            .send(MatcherCommand::Query("beta".into()))
+            .unwrap();
+        let state = worker.until(|s| {
+            !s.working
+                && s.total_matches == 300
+                && s.results
+                    .iter()
+                    .all(|r| r.item.match_text(false).starts_with("beta"))
+        });
+        assert!(state.results.iter().all(|r| r.indices == [0, 1, 2, 3]));
+        worker.commands.send(MatcherCommand::Resize(250)).unwrap();
+        worker.until(|s| s.results.len() == 250);
+        worker
+            .commands
+            .send(MatcherCommand::Query("no-match".into()))
+            .unwrap();
+        worker.until(|s| !s.working && s.total_matches == 0 && s.results.is_empty());
+        worker
+            .commands
+            .send(MatcherCommand::Query(String::new()))
+            .unwrap();
+        let state = worker.until(|s| !s.working && s.total_matches == 600);
+        assert_eq!(state.results.len(), 250);
+        assert!(state.results.iter().all(|r| r.indices.is_empty()));
+    }
+
+    #[test]
+    fn cached_match_columns_preserve_filename_and_unicode_content_highlights() {
+        for filename in [false, true] {
+            let (worker, items) = Worker::new(filename, !filename);
+            let item = if filename {
+                SearchItem::path("dir/café.rs")
+            } else {
+                SearchItem::grep("src/main.rs", 4, "let café = 1;")
+            };
+            worker
+                .commands
+                .send(MatcherCommand::Query("café".into()))
+                .unwrap();
+            items.send(vec![item.clone()]).unwrap();
+            drop(items);
+            let state = worker.until(|s| !s.working && s.total_matches == 1);
+            let result = &state.results[0];
+            assert_eq!(result.item, item);
+            let matched: String = item
+                .match_text(filename)
+                .chars()
+                .enumerate()
+                .filter(|(i, _)| result.indices.contains(&(*i as u32)))
+                .map(|(_, c)| c)
+                .collect();
+            assert_eq!(matched, "café");
+            assert_eq!(result.column, if filename { None } else { Some(5) });
+        }
+    }
 }

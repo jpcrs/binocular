@@ -6,7 +6,7 @@ use crate::infra::channel::Sender;
 use crate::preview::PreviewRequest;
 use crate::search::matcher::MatcherCommand;
 use crate::search::types::SearchMode;
-use crossterm::event::KeyEvent;
+use crossterm::event::{KeyCode, KeyEvent};
 
 pub fn handle_input(
     app: &mut App,
@@ -16,6 +16,29 @@ pub fn handle_input(
 ) {
     if kb_matches(&app.keybindings().quit, &key) {
         app.apply_action(AppAction::Quit);
+        return;
+    }
+
+    if app.ui.bench.is_some() && kb_matches(&app.keybindings().toggle_bench, &key) {
+        app.apply_action(AppAction::ToggleBench);
+        return;
+    }
+
+    if app.ui.bench.as_ref().is_some_and(|bench| bench.visible) {
+        match key.code {
+            KeyCode::Esc | KeyCode::Char('q') => app.apply_action(AppAction::CloseBench),
+            KeyCode::Down | KeyCode::Char('j') => {
+                if let Some(bench) = app.ui.bench.as_mut() {
+                    bench.scroll = bench.scroll.saturating_add(1);
+                }
+            }
+            KeyCode::Up | KeyCode::Char('k') => {
+                if let Some(bench) = app.ui.bench.as_mut() {
+                    bench.scroll = bench.scroll.saturating_sub(1);
+                }
+            }
+            _ => {}
+        }
         return;
     }
 
@@ -126,6 +149,7 @@ mod tests {
         App::from_configs(
             RunConfig {
                 headless: false,
+                bench: false,
                 output_format: crate::cli::args::OutputFormat::Plain,
                 output_file: None,
                 stdin: false,
@@ -160,6 +184,55 @@ mod tests {
 
     fn ctrl(ch: char) -> KeyEvent {
         KeyEvent::new(KeyCode::Char(ch), KeyModifiers::CONTROL)
+    }
+
+    #[test]
+    fn bench_modal_captures_input_and_restores_search() {
+        let mut app = app();
+        app.ui.bench = Some(crate::app::bench::BenchState::new(std::time::Instant::now()));
+        let (tx_cmd, _rx_cmd) = unbounded_default();
+        let (tx_preview, _rx_preview) = unbounded_default();
+        for code in [KeyCode::Char('x'), KeyCode::Enter, KeyCode::F(3)] {
+            handle_input(&mut app, key(code), &tx_cmd, &tx_preview);
+        }
+        assert!(app.search_session.query.text.is_empty());
+        assert!(!app.ui.should_quit);
+        assert!(!app.ui.restart_search);
+        handle_input(&mut app, key(KeyCode::Esc), &tx_cmd, &tx_preview);
+        assert!(!app.ui.bench.as_ref().unwrap().visible);
+        handle_input(&mut app, key(KeyCode::Char('x')), &tx_cmd, &tx_preview);
+        assert_eq!(app.search_session.query.text, "x");
+        handle_input(&mut app, key(KeyCode::F(12)), &tx_cmd, &tx_preview);
+        assert!(app.ui.bench.as_ref().unwrap().visible);
+        handle_input(&mut app, ctrl('c'), &tx_cmd, &tx_preview);
+        assert!(app.ui.should_quit);
+    }
+
+    #[test]
+    fn bench_shortcut_is_configurable_and_replaces_help() {
+        let mut app = app();
+        app.ui.bench = Some(crate::app::bench::BenchState::new(std::time::Instant::now()));
+        app.apply_action(AppAction::ToggleHelp);
+        app.runtime.app_config.keybindings.toggle_bench = vec![crate::config::KeyBinding {
+            code: KeyCode::F(9),
+            modifiers: KeyModifiers::NONE,
+        }];
+        let (tx_cmd, _rx_cmd) = unbounded_default();
+        let (tx_preview, _rx_preview) = unbounded_default();
+        handle_input(&mut app, key(KeyCode::F(9)), &tx_cmd, &tx_preview);
+        assert!(app.ui.bench.as_ref().unwrap().visible);
+        assert!(!app.ui.help.visible);
+        handle_input(&mut app, key(KeyCode::F(9)), &tx_cmd, &tx_preview);
+        assert!(!app.ui.bench.as_ref().unwrap().visible);
+    }
+
+    #[test]
+    fn bench_shortcut_does_not_enable_collection_without_flag() {
+        let mut app = app();
+        let (tx_cmd, _rx_cmd) = unbounded_default();
+        let (tx_preview, _rx_preview) = unbounded_default();
+        handle_input(&mut app, key(KeyCode::F(12)), &tx_cmd, &tx_preview);
+        assert!(app.ui.bench.is_none());
     }
 
     #[test]

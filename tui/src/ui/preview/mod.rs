@@ -67,10 +67,10 @@ pub fn render_preview(
             );
         }
         Some(PreviewContent::Diff(diff)) => {
-            plain_text::render_plain_text_preview(f, area, preview_block, diff.text.clone(), view);
+            plain_text::render_plain_text_preview(f, area, preview_block, &diff.text, view);
         }
         Some(PreviewContent::PlainText(content)) => {
-            plain_text::render_plain_text_preview(f, area, preview_block, content.clone(), view);
+            plain_text::render_plain_text_preview(f, area, preview_block, content, view);
         }
         Some(PreviewContent::Image(image)) => {
             preview::image::ui::render_image_preview(f, area, preview_block, image, view);

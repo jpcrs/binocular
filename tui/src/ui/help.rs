@@ -177,6 +177,10 @@ fn overview_sections(app: &App) -> Vec<HelpSection<'static>> {
         title: "Configured App Shortcuts",
         rows: vec![
             shortcut(&app.keybindings().toggle_help, "toggle help"),
+            shortcut(
+                &app.keybindings().toggle_bench,
+                "benchmarks (requires --bench)",
+            ),
             shortcut(&app.keybindings().quit, "quit binocular"),
             shortcut(
                 &app.keybindings().toggle_exact,
@@ -508,6 +512,7 @@ mod tests {
         let app = App::from_configs(
             crate::runtime::config::RunConfig {
                 headless: false,
+                bench: false,
                 output_format: crate::cli::args::OutputFormat::Plain,
                 output_file: None,
                 stdin: false,
@@ -551,6 +556,7 @@ mod tests {
         let rendered = render_sections(&logs_sections(&App::from_configs(
             crate::runtime::config::RunConfig {
                 headless: false,
+                bench: false,
                 output_format: crate::cli::args::OutputFormat::Plain,
                 output_file: None,
                 stdin: false,

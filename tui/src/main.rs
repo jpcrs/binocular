@@ -6,6 +6,7 @@ use clap::Parser;
 use std::io::{self, IsTerminal};
 
 fn main() -> anyhow::Result<()> {
+    let started_at = std::time::Instant::now();
     let resolved = cli::resolve_cli(cli::Cli::parse(), !io::stdin().is_terminal())?;
     let run_config = resolved.run;
     let search_config = resolved.search;
@@ -18,11 +19,12 @@ fn main() -> anyhow::Result<()> {
         return headless::run_with_configs(run_config, search_config, stdin_items);
     }
 
-    interactive::run_interactive_with_configs(
+    interactive::run_interactive_with_start_time(
         run_config,
         search_config,
         app_config,
         persisted_layout,
         log_max_entries,
+        started_at,
     )
 }

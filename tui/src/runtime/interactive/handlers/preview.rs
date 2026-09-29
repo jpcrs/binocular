@@ -264,6 +264,7 @@ mod tests {
         App::from_configs(
             RunConfig {
                 headless: false,
+                bench: false,
                 output_format: crate::cli::args::OutputFormat::Plain,
                 output_file: None,
                 stdin: false,

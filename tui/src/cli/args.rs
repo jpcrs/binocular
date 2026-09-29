@@ -22,8 +22,12 @@ pub struct Cli {
 #[derive(ClapArgs, Debug, Clone)]
 pub struct GlobalArgs {
     /// Headless mode: print results to stdout without opening the TUI
-    #[arg(short = 'H', long)]
+    #[arg(short = 'H', long, global = true)]
     pub headless: bool,
+
+    /// Open live UI benchmarks (F12 toggles the modal)
+    #[arg(long, global = true, conflicts_with = "headless")]
+    pub bench: bool,
 
     /// Format used when printing interactive selections to stdout
     #[arg(long, value_enum, default_value_t = OutputFormat::Plain)]
@@ -179,6 +183,7 @@ pub struct Args {
     pub git_branches: bool,
     pub git_commits: bool,
     pub headless: bool,
+    pub bench: bool,
     pub diff: Option<Vec<PathBuf>>,
     pub output_format: OutputFormat,
     pub output_file: Option<PathBuf>,
@@ -210,6 +215,7 @@ impl Default for Args {
             git_branches: false,
             git_commits: false,
             headless: false,
+            bench: false,
             diff: None,
             output_format: OutputFormat::Plain,
             output_file: None,
@@ -228,6 +234,7 @@ impl Cli {
     pub fn into_args(self) -> Args {
         let mut args = Args {
             headless: self.global.headless,
+            bench: self.global.bench,
             output_format: self.global.output_format,
             output_file: self.global.output_file,
             preview: self.global.preview,
@@ -301,6 +308,39 @@ fn apply_search_command(args: &mut Args, cmd: SearchCommandArgs) {
 mod tests {
     use super::*;
     use clap::Parser;
+
+    #[test]
+    fn bench_is_global_and_reaches_runtime_config() {
+        for argv in [
+            vec!["binocular", "--bench"],
+            vec!["binocular", "--bench", "files"],
+            vec!["binocular", "files", "--bench"],
+            vec!["binocular", "git", "commits", "--bench"],
+        ] {
+            let args = Cli::try_parse_from(argv).unwrap().into_args();
+            assert!(crate::runtime::config::RunConfig::from_args(&args).bench);
+        }
+        assert!(!Cli::parse_from(["binocular"]).into_args().bench);
+    }
+
+    #[test]
+    fn bench_rejects_headless_even_after_a_subcommand() {
+        for argv in [
+            vec!["binocular", "--bench", "--headless"],
+            vec!["binocular", "--headless", "files", "--bench"],
+            vec!["binocular", "files", "--bench", "--headless"],
+        ] {
+            match Cli::try_parse_from(argv) {
+                Err(err) => assert_eq!(err.kind(), clap::error::ErrorKind::ArgumentConflict),
+                Ok(cli) => {
+                    let err = crate::cli::resolve_cli(cli, false).unwrap_err();
+                    assert!(err
+                        .to_string()
+                        .contains("cannot be combined with --headless"));
+                }
+            }
+        }
+    }
 
     #[test]
     fn grep_alias_maps_to_content_command() {
