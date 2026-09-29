@@ -30,6 +30,8 @@ pub trait Receiver<T>: Send + 'static {
     fn recv(&self) -> Result<T, ChannelError>;
 
     fn try_recv(&self) -> Result<Option<T>, ChannelError>;
+
+    fn recv_timeout(&self, timeout: Duration) -> Result<Option<T>, ChannelError>;
 }
 
 pub struct KanalSender<T>(kanal::Sender<T>);
@@ -59,6 +61,14 @@ impl<T: Send + 'static> Sender<T> for KanalSender<T> {
 pub struct KanalReceiver<T>(kanal::Receiver<T>);
 
 impl<T: Send + 'static> Receiver<T> for KanalReceiver<T> {
+    fn recv_timeout(&self, timeout: Duration) -> Result<Option<T>, ChannelError> {
+        match self.0.recv_timeout(timeout) {
+            Ok(value) => Ok(Some(value)),
+            Err(kanal::ReceiveErrorTimeout::Timeout) => Ok(None),
+            Err(_) => Err(ChannelError::Disconnected),
+        }
+    }
+
     fn recv(&self) -> Result<T, ChannelError> {
         self.0.recv().map_err(|_| ChannelError::Disconnected)
     }
@@ -198,6 +208,22 @@ pub fn bounded_default<T: Send + 'static>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn timed_receive_wakes_for_messages_and_distinguishes_disconnect() {
+        let (tx, rx) = unbounded_default();
+        assert_eq!(rx.recv_timeout(Duration::ZERO).unwrap(), None);
+        let worker =
+            std::thread::spawn(move || rx.recv_timeout(Duration::from_secs(5)).unwrap().unwrap());
+        tx.send(42).unwrap();
+        assert_eq!(worker.join().unwrap(), 42);
+        let (tx, rx) = unbounded_default::<i32>();
+        drop(tx);
+        assert_eq!(
+            rx.recv_timeout(Duration::from_secs(5)),
+            Err(ChannelError::Disconnected)
+        );
+    }
 
     #[test]
     fn test_unbounded_send_recv() {

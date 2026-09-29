@@ -80,6 +80,7 @@ fn stream_matched_results(
         let _ = spawn_searcher_with_config(search_config, stop.clone(), tx_items);
     }
 
+    let _ = tx_cmd.send(MatcherCommand::Query(query.clone()));
     if settings.matcher.is_exact() {
         let _ = spawn_exact_matcher(
             rx_items,
@@ -100,21 +101,28 @@ fn stream_matched_results(
             settings.mode.is_content(),
         );
     }
-    let _ = tx_cmd.send(MatcherCommand::Query(query));
-
+    let mut rows = Vec::new();
     loop {
         match rx_state.recv() {
-            Ok(state) if !state.working => break,
-            Ok(_) => {}
+            Ok(mut state) => {
+                state.apply_results(&mut rows);
+                if !state.working {
+                    break;
+                }
+            }
             Err(_) => return Ok(()),
         }
     }
-
-    while let Ok(Some(_)) = rx_state.try_recv() {}
-
+    while let Ok(Some(mut state)) = rx_state.try_recv() {
+        state.apply_results(&mut rows);
+    }
     let _ = tx_cmd.send(MatcherCommand::Resize(u32::MAX));
-    if let Ok(state) = rx_state.recv() {
-        write_match_results(&state.results, settings.mode.is_content())?;
+    while let Ok(mut state) = rx_state.recv() {
+        state.apply_results(&mut rows);
+        if !state.working && rows.len() as u64 == state.total_matches {
+            write_match_results(&rows, settings.mode.is_content())?;
+            break;
+        }
     }
 
     Ok(())

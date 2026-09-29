@@ -164,18 +164,18 @@ fn main() {
                 .unwrap();
             drop(tx_items);
             let start = Instant::now();
+            let mut rows = Vec::new();
             loop {
-                let state = rx_state.recv().unwrap();
+                let mut state = rx_state.recv().unwrap();
+                state.apply_results(&mut rows);
                 if !state.working && state.total_items == 20_000 {
                     assert_eq!(state.total_matches, 20_000);
-                    assert_eq!(state.results.len(), 5000);
+                    assert_eq!(rows.len(), 5000);
                     println!(
                         "matcher load: {:.3} ms; checksum {}",
                         start.elapsed().as_secs_f64() * 1000.,
                         checksum(
-                            state
-                                .results
-                                .iter()
+                            rows.iter()
                                 .map(|r| (&r.item, &r.indices, r.column))
                                 .collect::<Vec<_>>()
                         )

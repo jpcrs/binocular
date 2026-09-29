@@ -196,22 +196,30 @@ fn handle_app_event(
 
 fn apply_matcher_state(
     app: &mut App,
-    state: crate::search::matcher::MatcherState,
+    mut state: crate::search::matcher::MatcherState,
     tx_preview: &channel::DefaultSender<PreviewRequest>,
 ) {
-    if !state.results.is_empty() {
+    let search = &app.search_session.search;
+    let selection_preserved = search.selection < state.results_start
+        && search
+            .results
+            .get(search.selection)
+            .is_some_and(|result| search.selected_item.as_ref() == Some(&result.item));
+    state.apply_results(&mut app.search_session.search.results);
+    if !app.search_session.search.results.is_empty() {
         if let Some(bench) = app.ui.bench.as_mut() {
             bench
                 .first_results
                 .get_or_insert_with(|| bench.started_at.elapsed());
         }
     }
-    app.search_session.search.results = state.results;
     app.search_session.search.total_matches = state.total_matches;
     app.search_session.search.total_items = state.total_items;
     app.search_session.search.working = state.working;
-    app.search_session.search.update_selection();
-    handlers::sync_preview(app, tx_preview);
+    if !selection_preserved {
+        app.search_session.search.update_selection();
+        handlers::sync_preview(app, tx_preview);
+    }
 }
 
 pub fn apply_preview_event(app: &mut App, source: PreviewSource, text: preview::PreviewContent) {
@@ -381,6 +389,64 @@ mod tests {
     }
 
     #[test]
+    fn matcher_tails_preserve_selection_marks_and_preview() {
+        use crate::search::matcher::MatcherState;
+        let mut app = app();
+        let (tx_preview, rx_preview) = unbounded_default();
+        let row = |name| SearchResult {
+            item: SearchItem::path(name),
+            indices: vec![0],
+            column: None,
+        };
+        apply_matcher_state(
+            &mut app,
+            MatcherState {
+                results_start: 0,
+                results: vec![row("a"), row("b")],
+                total_matches: 3,
+                total_items: 3,
+                working: false,
+            },
+            &tx_preview,
+        );
+        app.search_session.search.next();
+        handlers::sync_preview(&mut app, &tx_preview);
+        while rx_preview.try_recv().unwrap().is_some() {}
+        let selected = app.search_session.search.selected_item.clone().unwrap();
+        app.search_session
+            .search
+            .marked_items
+            .insert(selected.clone(), None);
+        let source = app.preview_session.preview.source.clone();
+        for (start, rows) in [(2, vec![row("c")]), (3, vec![])] {
+            apply_matcher_state(
+                &mut app,
+                MatcherState {
+                    results_start: start,
+                    results: rows,
+                    total_matches: 3,
+                    total_items: 3,
+                    working: false,
+                },
+                &tx_preview,
+            );
+            assert_eq!(app.search_session.search.selection, 1);
+            assert_eq!(
+                app.search_session.search.selected_item,
+                Some(selected.clone())
+            );
+            assert!(app
+                .search_session
+                .search
+                .marked_items
+                .contains_key(&selected));
+            assert_eq!(app.preview_session.preview.source, source);
+            assert!(rx_preview.try_recv().unwrap().is_none());
+        }
+        assert_eq!(app.search_session.search.results.len(), 3);
+    }
+
+    #[test]
     fn grep_matcher_state_syncs_preview_request_and_highlight() {
         let mut app = App::from_configs(run_config(), search_config(), LoadedAppConfig::default());
         app.search_session.settings.mode = SearchMode::Grep;
@@ -391,6 +457,7 @@ mod tests {
         apply_matcher_state(
             &mut app,
             crate::search::matcher::MatcherState {
+                results_start: 0,
                 results: vec![SearchResult {
                     item: SearchItem::grep("src/main.rs", 24, "fn main()"),
                     indices: vec![],
@@ -435,6 +502,7 @@ mod tests {
         apply_matcher_state(
             &mut app,
             crate::search::matcher::MatcherState {
+                results_start: 0,
                 results: vec![SearchResult {
                     item: SearchItem::history_line("abc123", "Architecture.md", 24, "fn main()"),
                     indices: vec![],

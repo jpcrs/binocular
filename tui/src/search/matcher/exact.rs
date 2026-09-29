@@ -299,6 +299,7 @@ fn run(
                             item_limit as usize,
                         );
                         let _ = tx_state.try_send(MatcherState {
+                            results_start: 0,
                             results,
                             total_matches,
                             total_items: items.len() as u64,
@@ -352,6 +353,7 @@ fn run(
                 item_limit as usize,
             );
             let _ = tx_state.try_send(MatcherState {
+                results_start: 0,
                 results,
                 total_matches,
                 total_items: items.len() as u64,
